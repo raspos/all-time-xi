@@ -5,7 +5,31 @@
 
 ---
 
-## 🚀 방법 1. 내 컴퓨터에서 즉시 외부 공개 (무료 1클릭 터널)
+## ⚡ 방법 1. GitHub + Vercel 조합 배포 (가장 빠르고 강력한 추천)
+
+본 프로젝트는 Vercel Serverless Function(`api/index.py`, `vercel.json`)과 완전히 호환되도록 구성되어 있습니다.  
+GitHub에 저장소를 푸시하고 Vercel에서 가져오기만 하면 **무료 글로벌 CDN HTTPS 사이트**가 1분 만에 완성됩니다.
+
+### 1단계: GitHub에 새 저장소 생성 및 푸시
+1. [GitHub.com](https://github.com)에서 **New repository**를 클릭합니다. (예: `all-time-xi`)
+2. 터미널(PowerShell)에서 아래 명령어를 순서대로 실행합니다:
+   ```bash
+   git remote add origin https://github.com/<내-GitHub-아이디>/<저장소이름>.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+### 2단계: Vercel에서 원클릭 배포
+1. [Vercel.com](https://vercel.com)에 로그인 후 **[Add New...] → [Project]**를 클릭합니다.
+2. 방금 올린 GitHub 저장소(`all-time-xi`)에서 **[Import]**를 클릭합니다.
+3. 기본 설정 그대로 둔 채 **[Deploy]** 버튼을 누릅니다!
+   - `vercel.json`과 `api/index.py`, `requirements.txt`가 이미 완벽히 세팅되어 있어 추가 설정이 필요 없습니다.
+4. 약 1분 후 배포가 완료되면 `https://all-time-xi-xxx.vercel.app` 형태의 고유 공개 주소가 즉시 생성됩니다.
+5. 방문자는 로그인이나 API 키 등록 없이 전술판을 만들고, 고해상도 PNG를 다운로드하고, AI 맞대결을 즐길 수 있습니다.
+
+---
+
+## 🚀 방법 2. 내 컴퓨터에서 즉시 외부 공개 (무료 1클릭 터널)
 
 복잡한 클라우드 가입 없이 **지금 바로 스마트폰이나 친구들에게 사이트를 공개**하고 싶을 때 사용합니다.
 
@@ -15,7 +39,7 @@
 
 ---
 
-## ☁️ 방법 2. Render.com 무료 클라우드 배포 (추천: 상시 운영)
+## ☁️ 방법 3. Render.com 무료 클라우드 배포 (대안: 상시 운영)
 
 GitHub 저장소와 연동하여 24시간 꺼지지 않는 무료 웹사이트를 생성할 수 있습니다.
 
