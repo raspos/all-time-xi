@@ -1560,7 +1560,10 @@ public_candidates = [
     Path("public"),
 ]
 public_dir = next((p for p in public_candidates if p.exists()), ROOT_DIR / "public")
-os.makedirs(str(public_dir), exist_ok=True)
+try:
+    os.makedirs(str(public_dir), exist_ok=True)
+except Exception:
+    pass
 
 # Serve /static with a plain route: the StaticFiles mount crashes the Vercel Python runtime
 # (FUNCTION_INVOCATION_FAILED on every /static request), so read files into memory instead.

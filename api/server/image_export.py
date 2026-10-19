@@ -15,8 +15,11 @@ from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-CACHE_DIR = "data/image_cache"
-os.makedirs(CACHE_DIR, exist_ok=True)
+CACHE_DIR = "/tmp/image_cache"
+try:
+    os.makedirs(CACHE_DIR, exist_ok=True)
+except Exception:
+    pass
 
 def load_korean_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     candidates = [
