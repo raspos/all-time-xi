@@ -2186,24 +2186,41 @@
   // Expose public handler methods on window.app
   window.app = {
     async init() {
-      const [cResp, fResp, lResp, aiResp] = await Promise.all([
-        fetch('/api/countries'),
-        fetch('/api/formations'),
-        fetch('/api/lineups'),
-        fetch('/api/ai/status')
-      ]);
-      const cData = await cResp.json();
-      const fData = await fResp.json();
-      const lData = await lResp.json();
-      state.countries = cData.countries || [];
-      state.rankingDate = cData.ranking_snapshot_date || '2026-10-07';
-      state.formations = fData.formations || [];
-      state.savedLineups = lData.lineups || [];
-      state.aiStatus = await aiResp.json();
-
-      await loadCountryPlayersForBuilder('BRA');
-      await initBuilderSlotsForFormation('4-3-3', false);
-      autoFillBuilderLegendXI();
+      try {
+        const bResp = await fetch('/api/bootstrap');
+        if (bResp.ok) {
+          const bData = await bResp.json();
+          state.countries = bData.countries || [];
+          state.rankingDate = bData.ranking_snapshot_date || '2026-10-07';
+          state.formations = bData.formations || [];
+          state.savedLineups = bData.lineups || [];
+          state.aiStatus = bData.ai_status || { configured: true, active_provider: 'engine' };
+          state.builderCountryCode = 'BRA';
+          state.builderCountryPlayers = bData.initial_builder_players || [];
+          await initBuilderSlotsForFormation('4-3-3', false);
+          autoFillBuilderLegendXI();
+        } else {
+          throw new Error('Bootstrap fallback');
+        }
+      } catch (err) {
+        const [cResp, fResp, lResp, aiResp] = await Promise.all([
+          fetch('/api/countries'),
+          fetch('/api/formations'),
+          fetch('/api/lineups'),
+          fetch('/api/ai/status')
+        ]);
+        const cData = await cResp.json();
+        const fData = await fResp.json();
+        const lData = await lResp.json();
+        state.countries = cData.countries || [];
+        state.rankingDate = cData.ranking_snapshot_date || '2026-10-07';
+        state.formations = fData.formations || [];
+        state.savedLineups = lData.lineups || [];
+        state.aiStatus = await aiResp.json();
+        await loadCountryPlayersForBuilder('BRA');
+        await initBuilderSlotsForFormation('4-3-3', false);
+        autoFillBuilderLegendXI();
+      }
 
       // Check if opened via a direct Share URL (/team/{slug} or /match/{slug})
       const shareCtx = window.__INITIAL_SHARE_CONTEXT__;

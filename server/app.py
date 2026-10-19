@@ -75,10 +75,90 @@ app.add_middleware(
 )
 
 def get_db() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
+    try:
+        conn.execute("PRAGMA synchronous = NORMAL;")
+        conn.execute("PRAGMA cache_size = 10000;")
+        conn.execute("PRAGMA temp_store = MEMORY;")
+    except Exception:
+        pass
     return conn
+
+# ==============================================================================
+# HIGH-SPEED BOOTSTRAP API (Loads all initial data in 1 single HTTP request)
+# ==============================================================================
+@app.get("/api/bootstrap")
+def get_bootstrap_data(response: Response):
+    response.headers["Cache-Control"] = "public, max-age=1800, s-maxage=3600, stale-while-revalidate=86400"
+    conn = get_db()
+    cur = conn.cursor()
+
+    # 1. Countries
+    cur.execute("""
+        SELECT c.*,
+               rs.fifa_rank, rs.rank_change, rs.fifa_points, rs.snapshot_date, rs.is_target_top30,
+               (SELECT COUNT(*) FROM player_national_team_careers nc WHERE nc.country_id = c.id AND nc.is_eligible_30_caps = 1) AS eligible_player_count
+        FROM countries c
+        LEFT JOIN country_ranking_snapshots rs ON rs.country_id = c.id AND rs.is_current_snapshot = 1
+        WHERE rs.is_target_top30 = 1
+        ORDER BY COALESCE(rs.fifa_rank, 999) ASC
+    """)
+    countries = [dict(r) for r in cur.fetchall()]
+
+    # 2. Formations
+    cur.execute("SELECT * FROM formations ORDER BY id ASC")
+    formations = []
+    for r in cur.fetchall():
+        d = dict(r)
+        d["slots"] = json.loads(d.pop("slots_json"))
+        formations.append(d)
+
+    # 3. Saved Lineups
+    cur.execute("""
+        SELECT id, share_slug, country_fifa_code, country_name_ko, team_name,
+               formation_code, tactical_style, board_color_theme, team_description,
+               view_count, created_at, lineup_snapshot_json
+        FROM saved_lineups ORDER BY id DESC LIMIT 15
+    """)
+    lineups = []
+    for r in cur.fetchall():
+        d = dict(r)
+        d["snapshot"] = json.loads(d.pop("lineup_snapshot_json"))
+        lineups.append(d)
+
+    # 4. Initial Brazil squad for immediate pitch render
+    cur.execute("SELECT id FROM countries WHERE fifa_code = 'BRA'")
+    bra_row = cur.fetchone()
+    bra_id = bra_row["id"] if bra_row else 1
+    cur.execute("""
+        SELECT p.*, nc.official_caps, nc.official_goals, nc.active_period_label, nc.primary_decade,
+               pi.image_url, pi.fallback_number, ca.major_honors_ko, c.name_ko AS country_name_ko, c.fifa_code AS country_fifa_code
+        FROM players p
+        JOIN player_national_team_careers nc ON nc.player_id = p.id
+        JOIN countries c ON c.id = nc.country_id
+        LEFT JOIN player_images pi ON pi.player_id = p.id
+        LEFT JOIN player_career_awards ca ON ca.player_id = p.id
+        WHERE nc.country_id = ? AND nc.is_eligible_30_caps = 1
+        ORDER BY nc.official_caps DESC
+    """, (bra_id,))
+    bra_players = []
+    for r in cur.fetchall():
+        d = dict(r)
+        d["display_name"] = f"{d['name_ko']} ({d['name_en']})"
+        d["secondary_positions"] = json.loads(d["secondary_positions"]) if d["secondary_positions"] else []
+        bra_players.append(d)
+
+    conn.close()
+
+    return {
+        "countries": countries,
+        "ranking_snapshot_date": "2026-10-07",
+        "formations": formations,
+        "lineups": lineups,
+        "ai_status": get_ai_status(),
+        "initial_builder_players": bra_players
+    }
 
 def evaluate_slot_suitability(conn: sqlite3.Connection, player_id: int, primary_pos: str, secondary_json: str, slot_code: str, slot_group: str) -> Dict[str, Any]:
     cur = conn.cursor()
