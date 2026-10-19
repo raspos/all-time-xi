@@ -1,0 +1,317 @@
+// ALL-TIME XI Prisma Schema (PostgreSQL / SQLite compatible)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Country {
+  id                   Int                      @id @default(autoincrement())
+  fifaCode             String                   @unique @map("fifa_code")
+  isoAlpha2            String?                  @map("iso_alpha2")
+  nameKo               String                   @map("name_ko")
+  nameEn               String                   @map("name_en")
+  confederation        String
+  flagEmoji            String                   @map("flag_emoji")
+  flagSvgUrl           String?                  @map("flag_svg_url")
+  worldCupTitles       Int                      @default(0) @map("world_cup_titles")
+  worldCupWinningYears String?                  @map("world_cup_winning_years")
+  majorHonorsKo        String?                  @map("major_honors_ko")
+  kitPrimaryColor      String                   @default("#1e293b") @map("kit_primary_color")
+  kitSecondaryColor    String                   @default("#ffffff") @map("kit_secondary_color")
+  kitAccentColor       String                   @default("#fbbf24") @map("kit_accent_color")
+  kitTextColor         String                   @default("#ffffff") @map("kit_text_color")
+  kitPatternType       String                   @default("solid") @map("kit_pattern_type")
+  historicalNoteKo     String?                  @map("historical_note_ko")
+  tmNationalTeamId     Int?                     @map("tm_national_team_id")
+  rsssfUrl             String?                  @map("rsssf_url")
+  wikiListUrl          String?                  @map("wiki_list_url")
+  dataCoverageNoteKo   String?                  @map("data_coverage_note_ko")
+  lastDataUpdatedAt    String?                  @map("last_data_updated_at")
+  createdAt            String                   @map("created_at")
+  updatedAt            String                   @map("updated_at")
+
+  rankingSnapshots     CountryRankingSnapshot[]
+  nationalTeamCareers  PlayerNationalTeamCareer[]
+  qualityFlags         DataQualityFlag[]
+  savedLineups         SavedLineup[]
+
+  @@map("countries")
+}
+
+model CountryRankingSnapshot {
+  id                Int     @id @default(autoincrement())
+  snapshotDate      String  @map("snapshot_date")
+  countryId         Int     @map("country_id")
+  fifaRank          Int     @map("fifa_rank")
+  rankChange        Int?    @default(0) @map("rank_change")
+  fifaPoints        Float   @map("fifa_points")
+  isTargetTop30     Int     @default(1) @map("is_target_top30")
+  isCurrentSnapshot Int     @default(1) @map("is_current_snapshot")
+  officialSourceUrl String? @map("official_source_url")
+  createdAt         String  @map("created_at")
+
+  country           Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@unique([snapshotDate, countryId])
+  @@map("country_ranking_snapshots")
+}
+
+model Player {
+  id                    Int                        @id @default(autoincrement())
+  internalUid           String                     @unique @map("internal_uid")
+  nameKo                String                     @map("name_ko")
+  nameEn                String                     @map("name_en")
+  nameNative            String?                    @map("name_native")
+  aliasesSearch         String?                    @map("aliases_search")
+  nationalityCode       String                     @map("nationality_code")
+  dateOfBirth           String?                    @map("date_of_birth")
+  birthYear             Int?                       @map("birth_year")
+  isDeceased            Int?                       @map("is_deceased")
+  dateOfDeath           String?                    @map("date_of_death")
+  primaryPosition       String                     @map("primary_position")
+  positionGroup         String                     @map("position_group")
+  secondaryPositions    String?                    @map("secondary_positions")
+  heightCm              Int?                       @map("height_cm")
+  preferredFoot         String?                    @map("preferred_foot")
+  isActivePlayer        Int                        @default(0) @map("is_active_player")
+  playStyleKo           String?                    @map("play_style_ko")
+  primaryRoleKo         String?                    @map("primary_role_ko")
+  attackDefenseTraitsKo String?                    @map("attack_defense_traits_ko")
+  workRateMobilityKo    String?                    @map("work_rate_mobility_ko")
+  tacticalFitRoleKo     String?                    @map("tactical_fit_role_ko")
+  factBioKo             String?                    @map("fact_bio_ko")
+  aiStyleSummaryKo      String?                    @map("ai_style_summary_ko")
+  isLegendTestCase      Int                        @default(0) @map("is_legend_test_case")
+  createdAt             String                     @map("created_at")
+  updatedAt             String                     @map("updated_at")
+
+  nationalTeamCareers   PlayerNationalTeamCareer[]
+  positions             PlayerPosition[]
+  careerAwards          PlayerCareerAward?
+  image                 PlayerImage?
+  sourceRecords         PlayerSourceRecord[]
+  qualityFlags          DataQualityFlag[]
+  lineupPlayers         LineupPlayer[]
+
+  @@map("players")
+}
+
+model PlayerNationalTeamCareer {
+  id                  Int     @id @default(autoincrement())
+  playerId            Int     @map("player_id")
+  countryId           Int     @map("country_id")
+  representedFifaCode String  @map("represented_fifa_code")
+  historicalTeamCode  String? @map("historical_team_code")
+  careerStartYear     Int?    @map("career_start_year")
+  careerEndYear       Int?    @map("career_end_year")
+  activePeriodLabel   String? @map("active_period_label")
+  decadeTags          String? @map("decade_tags")
+  primaryDecade       String? @map("primary_decade")
+  officialCaps        Int?    @map("official_caps")
+  officialGoals       Int?    @map("official_goals")
+  isEligible30Caps    Int     @default(0) @map("is_eligible_30_caps")
+  verificationStatus  String  @default("verified") @map("verification_status")
+  recordSourceName    String  @map("record_source_name")
+  recordSourceUrl     String? @map("record_source_url")
+  verifiedDate        String  @map("verified_date")
+  discrepancyNoteKo   String? @map("discrepancy_note_ko")
+
+  player              Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  country             Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, countryId, representedFifaCode])
+  @@map("player_national_team_careers")
+}
+
+model PlayerPosition {
+  id               Int    @id @default(autoincrement())
+  playerId         Int    @map("player_id")
+  positionCode     String @map("position_code")
+  positionGroup    String @map("position_group")
+  isPrimary        Int    @default(0) @map("is_primary")
+  suitabilityTier  String @default("natural") @map("suitability_tier")
+  suitabilityScore Int    @default(100) @map("suitability_score")
+
+  player           Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, positionCode])
+  @@map("player_positions")
+}
+
+model PlayerCareerAward {
+  id                      Int     @id @default(autoincrement())
+  playerId                Int     @unique @map("player_id")
+  majorClubsKo            String? @map("major_clubs_ko")
+  majorHonorsKo           String? @map("major_honors_ko")
+  worldCupParticipations  String? @map("world_cup_participations")
+  worldCupWinner          Int?    @map("world_cup_winner")
+  worldCupTitlesCount     Int?    @default(0) @map("world_cup_titles_count")
+  continentalWinner       Int?    @map("continental_winner")
+  continentalTitlesKo     String? @map("continental_titles_ko")
+  ballonDorWinner         Int?    @map("ballon_dor_winner")
+  ballonDorCount          Int?    @default(0) @map("ballon_dor_count")
+  individualAwardsKo      String? @map("individual_awards_ko")
+
+  player                  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("player_career_awards")
+}
+
+model PlayerImage {
+  id                  Int     @id @default(autoincrement())
+  playerId            Int     @unique @map("player_id")
+  imageUrl            String? @map("image_url")
+  originalSourceName  String? @map("original_source_name")
+  originalSourceUrl   String? @map("original_source_url")
+  licenseInfo         String? @map("license_info")
+  requiresAttribution Int?    @default(0) @map("requires_attribution")
+  authorCredit        String? @map("author_credit")
+  fallbackNumber      Int?    @default(10) @map("fallback_number")
+  fallbackInitials    String? @map("fallback_initials")
+
+  player              Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("player_images")
+}
+
+model DataSource {
+  id                 Int                  @id @default(autoincrement())
+  sourceCode         String               @unique @map("source_code")
+  sourceName         String               @map("source_name")
+  baseUrl            String               @map("base_url")
+  coverageScopeKo    String               @map("coverage_scope_ko")
+  lastUpdatedDate    String               @map("last_updated_date")
+  termsAndLicenseKo  String               @map("terms_and_license_ko")
+  collectionMethodKo String               @map("collection_method_ko")
+
+  records            PlayerSourceRecord[]
+
+  @@map("data_sources")
+}
+
+model PlayerSourceRecord {
+  id             Int        @id @default(autoincrement())
+  playerId       Int        @map("player_id")
+  sourceId       Int        @map("source_id")
+  externalId     String?    @map("external_id")
+  externalUrl    String?    @map("external_url")
+  sourceCaps     Int?       @map("source_caps")
+  sourceGoals    Int?       @map("source_goals")
+  sourcePosition String?    @map("source_position")
+  rawExcerptJson String?    @map("raw_excerpt_json")
+  checkedAt      String     @map("checked_at")
+
+  player         Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  source         DataSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, sourceId])
+  @@map("player_source_records")
+}
+
+model DataQualityFlag {
+  id             Int      @id @default(autoincrement())
+  playerId       Int?     @map("player_id")
+  countryId      Int?     @map("country_id")
+  flagType       String   @map("flag_type")
+  severity       String   @default("info")
+  descriptionKo  String   @map("description_ko")
+  sourceAValue   String?  @map("source_a_value")
+  sourceBValue   String?  @map("source_b_value")
+  isResolved     Int      @default(0) @map("is_resolved")
+  resolvedNoteKo String?  @map("resolved_note_ko")
+  createdAt      String   @map("created_at")
+  resolvedAt     String?  @map("resolved_at")
+
+  player         Player?  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  country        Country? @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@map("data_quality_flags")
+}
+
+model Formation {
+  id                        Int    @id @default(autoincrement())
+  code                      String @unique
+  nameKo                    String @map("name_ko")
+  descriptionKo             String @map("description_ko")
+  tacticalCharacteristicsKo String @map("tactical_characteristics_ko")
+  slotsJson                 String @map("slots_json")
+
+  @@map("formations")
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  sessionToken String        @unique @map("session_token")
+  nickname     String?
+  createdAt    String        @map("created_at")
+
+  savedLineups SavedLineup[]
+
+  @@map("users")
+}
+
+model SavedLineup {
+  id                 Int            @id @default(autoincrement())
+  shareSlug          String         @unique @map("share_slug")
+  userId             Int?           @map("user_id")
+  countryId          Int            @map("country_id")
+  countryFifaCode    String         @map("country_fifa_code")
+  countryNameKo      String         @map("country_name_ko")
+  teamName           String         @map("team_name")
+  formationCode      String         @map("formation_code")
+  captainPlayerId    Int?           @map("captain_player_id")
+  tacticalStyle      String         @default("균형형") @map("tactical_style")
+  boardColorTheme    String         @default("classic_emerald") @map("board_color_theme")
+  teamDescription    String?        @map("team_description")
+  lineupSnapshotJson String         @map("lineup_snapshot_json")
+  viewCount          Int            @default(0) @map("view_count")
+  createdAt          String         @map("created_at")
+  updatedAt          String         @map("updated_at")
+
+  user               User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  country            Country        @relation(fields: [countryId], references: [id])
+  players            LineupPlayer[]
+
+  @@map("saved_lineups")
+}
+
+model LineupPlayer {
+  id                Int         @id @default(autoincrement())
+  lineupId          Int         @map("lineup_id")
+  slotIndex         Int         @map("slot_index")
+  slotCode          String      @map("slot_code")
+  playerId          Int         @map("player_id")
+  customX           Float?      @map("custom_x")
+  customY           Float?      @map("custom_y")
+  suitabilityStatus String      @map("suitability_status")
+  suitabilityScore  Int         @default(100) @map("suitability_score")
+  jerseyNumber      Int?        @map("jersey_number")
+  isCaptain         Int         @default(0) @map("is_captain")
+
+  lineup            SavedLineup @relation(fields: [lineupId], references: [id], onDelete: Cascade)
+  player            Player      @relation(fields: [playerId], references: [id])
+
+  @@unique([lineupId, slotIndex])
+  @@unique([lineupId, playerId])
+  @@map("lineup_players")
+}
+
+model AiComparison {
+  id                Int     @id @default(autoincrement())
+  shareSlug         String  @unique @map("share_slug")
+  cacheKey          String  @unique @map("cache_key")
+  teamALineupId     Int?    @map("team_a_lineup_id")
+  teamBLineupId     Int?    @map("team_b_lineup_id")
+  teamASnapshotJson String  @map("team_a_snapshot_json")
+  teamBSnapshotJson String  @map("team_b_snapshot_json")
+  providerName      String  @map("provider_name")
+  modelName         String  @map("model_name")
+  analysisJson      String  @map("analysis_json")
+  createdAt         String  @map("created_at")
+
+  @@map("ai_comparisons")
+}

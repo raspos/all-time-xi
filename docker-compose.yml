@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: all-time-xi
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - AI_PROVIDER=engine
+      # Optional: set GEMINI_API_KEY or OPENAI_API_KEY if desired for external LLM enhancement
+      # - GEMINI_API_KEY=your_key_here
+    volumes:
+      # Persist SQLite database and cached PNG images across container restarts
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/countries"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
