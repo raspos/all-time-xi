@@ -2,7 +2,7 @@
 """
 Vercel Serverless Function Entrypoint for ALL-TIME XI.
 Exposes top-level 'app' and 'handler' for Vercel Python runtime.
-Includes full traceback reporting for zero-mystery debugging.
+Handles Vercel URL rewrite path mapping and exception reporting.
 """
 import os
 import sys
@@ -40,11 +40,31 @@ except Exception:
 
 if init_error is None:
     from fastapi import Request, Response
+    from fastapi.responses import JSONResponse
+
     @app.middleware("http")
-    async def vercel_exception_reporter(request: Request, call_next):
+    async def vercel_middleware(request: Request, call_next):
+        # 1. Restore original path from Vercel rewrite headers if rewritten
+        for hdr in ["x-matched-path", "x-invoke-path", "x-forwarded-uri", "x-original-url"]:
+            val = request.headers.get(hdr)
+            if val and val.startswith("/") and not val.startswith("/api/index"):
+                clean_path = val.split("?")[0]
+                request.scope["path"] = clean_path
+                break
+
+        # 2. Diagnostic endpoint: if x-debug header is 1
+        if request.headers.get("x-debug") == "1":
+            return JSONResponse({
+                "scope_path": request.scope.get("path"),
+                "url_path": request.url.path,
+                "headers": dict(request.headers),
+                "matched_path": request.headers.get("x-matched-path"),
+                "routes": [r.path for r in app.routes if hasattr(r, "path")]
+            })
+
         try:
             return await call_next(request)
-        except Exception as exc:
+        except Exception:
             return Response(
                 f"VERCEL RUNTIME EXCEPTION:\n{traceback.format_exc()}",
                 status_code=500,
