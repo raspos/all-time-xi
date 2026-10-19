@@ -27,38 +27,9 @@ from server.image_export import render_lineup_png, render_ai_comparison_png
 
 import shutil
 from pathlib import Path
+from fastapi.middleware.cors import CORSMiddleware
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-BASE_DB = ROOT_DIR / "data" / "all_time_xi.db"
-
-import tempfile
-
-# Serverless (Vercel) / Read-only container writable /tmp DB support
-if os.environ.get("VERCEL"):
-    tmp_dir = Path("/tmp")
-    try:
-        tmp_dir.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        tmp_dir = Path(tempfile.gettempdir())
-    TMP_DB = tmp_dir / "all_time_xi.db"
-    if not TMP_DB.exists():
-        candidates = [
-            BASE_DB,
-            ROOT_DIR / "api" / "data" / "all_time_xi.db",
-            Path(__file__).resolve().parent / "data" / "all_time_xi.db",
-            Path("/var/task/data/all_time_xi.db"),
-            Path("/var/task/api/data/all_time_xi.db"),
-            Path("data/all_time_xi.db"),
-            Path("api/data/all_time_xi.db"),
-        ]
-        found = next((p for p in candidates if p.exists() and p.stat().st_size > 1000000), None)
-        if found:
-            shutil.copy2(str(found), str(TMP_DB))
-    DB_PATH = str(TMP_DB) if TMP_DB.exists() else str(BASE_DB)
-else:
-    DB_PATH = os.environ.get("DB_PATH", str(BASE_DB))
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="ALL-TIME XI API",
@@ -74,8 +45,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_RESOLVED_DB_PATH = None
+
+def resolve_database_path() -> str:
+    global _RESOLVED_DB_PATH
+    if _RESOLVED_DB_PATH and os.path.exists(_RESOLVED_DB_PATH) and os.path.getsize(_RESOLVED_DB_PATH) > 1000000:
+        return _RESOLVED_DB_PATH
+
+    # Check writable tmp database first
+    tmp_dir = Path("/tmp")
+    try:
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        tmp_dir = Path(tempfile.gettempdir())
+    tmp_db = tmp_dir / "all_time_xi.db"
+    if tmp_db.exists() and tmp_db.stat().st_size > 1000000:
+        _RESOLVED_DB_PATH = str(tmp_db)
+        return _RESOLVED_DB_PATH
+
+    # Search known candidate paths
+    candidates = [
+        ROOT_DIR / "data" / "all_time_xi.db",
+        ROOT_DIR / "api" / "data" / "all_time_xi.db",
+        Path(__file__).resolve().parent / "data" / "all_time_xi.db",
+        Path(__file__).resolve().parent.parent / "data" / "all_time_xi.db",
+        Path("/var/task/data/all_time_xi.db"),
+        Path("/var/task/api/data/all_time_xi.db"),
+        Path("data/all_time_xi.db"),
+        Path("api/data/all_time_xi.db"),
+    ]
+    found = next((p for p in candidates if p.exists() and p.stat().st_size > 1000000), None)
+
+    # Recursive rglob fallback
+    if not found:
+        for search_root in [ROOT_DIR, Path(__file__).resolve().parent, Path("/var/task"), Path(".")]:
+            if search_root.exists():
+                for p in search_root.rglob("all_time_xi.db"):
+                    if p.is_file() and p.stat().st_size > 1000000:
+                        found = p
+                        break
+            if found:
+                break
+
+    if found:
+        # Copy to /tmp for read-write access in serverless if writable
+        try:
+            shutil.copy2(str(found), str(tmp_db))
+            _RESOLVED_DB_PATH = str(tmp_db)
+            return _RESOLVED_DB_PATH
+        except Exception:
+            _RESOLVED_DB_PATH = str(found)
+            return _RESOLVED_DB_PATH
+
+    _RESOLVED_DB_PATH = str(ROOT_DIR / "data" / "all_time_xi.db")
+    return _RESOLVED_DB_PATH
+
+DB_PATH = resolve_database_path()
+
 def get_db() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    db_file = resolve_database_path()
+    conn = sqlite3.connect(db_file, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     try:
         conn.execute("PRAGMA synchronous = NORMAL;")
@@ -84,6 +113,44 @@ def get_db() -> sqlite3.Connection:
     except Exception:
         pass
     return conn
+
+# ==============================================================================
+# FAST DIRECT STATIC FILE HANDLER (Bypasses ASGI Mount, Ultra-Fast CDN Caching)
+# ==============================================================================
+@app.get("/static/{file_path:path}")
+def serve_static_file(file_path: str):
+    candidates = [
+        ROOT_DIR / "public" / file_path,
+        ROOT_DIR / "api" / "public" / file_path,
+        Path(__file__).resolve().parent / "public" / file_path,
+        Path(__file__).resolve().parent.parent / "public" / file_path,
+        Path("/var/task/public") / file_path,
+        Path("/var/task/api/public") / file_path,
+        Path("public") / file_path,
+        Path("api/public") / file_path,
+    ]
+    found = next((p for p in candidates if p.exists() and p.is_file()), None)
+    if not found:
+        fname = Path(file_path).name
+        for search_root in [ROOT_DIR, Path(__file__).resolve().parent, Path("/var/task"), Path(".")]:
+            if search_root.exists():
+                for p in search_root.rglob(fname):
+                    if p.is_file():
+                        found = p
+                        break
+            if found:
+                break
+
+    if found and found.exists():
+        mime = "application/javascript" if file_path.endswith(".js") else ("text/css" if file_path.endswith(".css") else "application/octet-stream")
+        return FileResponse(
+            str(found),
+            media_type=mime,
+            headers={
+                "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+            }
+        )
+    return Response(f"File {file_path} not found", status_code=404)
 
 # ==============================================================================
 # HIGH-SPEED BOOTSTRAP API (Loads all initial data in 1 single HTTP request)
