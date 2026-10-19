@@ -160,6 +160,32 @@ def get_bootstrap_data(response: Response):
         "initial_builder_players": bra_players
     }
 
+@app.get("/api/debug")
+def debug_endpoint():
+    import glob
+    db_exists = os.path.exists(DB_PATH)
+    db_size = os.path.getsize(DB_PATH) if db_exists else -1
+    err = None
+    country_count = -1
+    try:
+        c = get_db()
+        r = c.execute("SELECT COUNT(*) FROM countries").fetchone()
+        country_count = r[0]
+        c.close()
+    except Exception as e:
+        err = str(e)
+    return {
+        "DB_PATH": DB_PATH,
+        "db_exists": db_exists,
+        "db_size": db_size,
+        "country_count": country_count,
+        "db_error": err,
+        "public_dir": str(public_dir),
+        "public_dir_exists": public_dir.exists(),
+        "app_js_exists": (public_dir / "app.js").exists(),
+        "task_files": glob.glob("/var/task/**/*", recursive=True)[:30]
+    }
+
 def evaluate_slot_suitability(conn: sqlite3.Connection, player_id: int, primary_pos: str, secondary_json: str, slot_code: str, slot_group: str) -> Dict[str, Any]:
     cur = conn.cursor()
     cur.execute(
@@ -1468,4 +1494,27 @@ public_candidates = [
 ]
 public_dir = next((p for p in public_candidates if p.exists()), ROOT_DIR / "public")
 os.makedirs(str(public_dir), exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(public_dir)), name="static")
+
+# Serve /static with a plain route: the StaticFiles mount crashes the Vercel Python runtime
+# (FUNCTION_INVOCATION_FAILED on every /static request), so read files into memory instead.
+STATIC_MEDIA_TYPES = {
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".html": "text/html; charset=utf-8",
+    ".json": "application/json",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".ico": "image/x-icon",
+}
+
+@app.get("/static/{file_path:path}")
+def serve_static(file_path: str):
+    root = public_dir.resolve()
+    target = (root / file_path).resolve()
+    if root not in target.parents or not target.is_file():
+        return Response(status_code=404)
+    media_type = STATIC_MEDIA_TYPES.get(target.suffix.lower(), "application/octet-stream")
+    return Response(content=target.read_bytes(), media_type=media_type, headers={"Cache-Control": "public, max-age=300"})

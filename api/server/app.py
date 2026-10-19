@@ -1468,4 +1468,27 @@ public_candidates = [
 ]
 public_dir = next((p for p in public_candidates if p.exists()), ROOT_DIR / "public")
 os.makedirs(str(public_dir), exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(public_dir)), name="static")
+
+# Serve /static with a plain route: the StaticFiles mount crashes the Vercel Python runtime
+# (FUNCTION_INVOCATION_FAILED on every /static request), so read files into memory instead.
+STATIC_MEDIA_TYPES = {
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".html": "text/html; charset=utf-8",
+    ".json": "application/json",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".ico": "image/x-icon",
+}
+
+@app.get("/static/{file_path:path}")
+def serve_static(file_path: str):
+    root = public_dir.resolve()
+    target = (root / file_path).resolve()
+    if root not in target.parents or not target.is_file():
+        return Response(status_code=404)
+    media_type = STATIC_MEDIA_TYPES.get(target.suffix.lower(), "application/octet-stream")
+    return Response(content=target.read_bytes(), media_type=media_type, headers={"Cache-Control": "public, max-age=300"})
