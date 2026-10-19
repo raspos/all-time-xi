@@ -31,12 +31,30 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 BASE_DB = ROOT_DIR / "data" / "all_time_xi.db"
 
+import tempfile
+
 # Serverless (Vercel) / Read-only container writable /tmp DB support
 if os.environ.get("VERCEL"):
-    TMP_DB = Path("/tmp/all_time_xi.db")
-    if not TMP_DB.exists() and BASE_DB.exists():
-        shutil.copy2(str(BASE_DB), str(TMP_DB))
-    DB_PATH = str(TMP_DB)
+    tmp_dir = Path("/tmp")
+    try:
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        tmp_dir = Path(tempfile.gettempdir())
+    TMP_DB = tmp_dir / "all_time_xi.db"
+    if not TMP_DB.exists():
+        candidates = [
+            BASE_DB,
+            ROOT_DIR / "api" / "data" / "all_time_xi.db",
+            Path(__file__).resolve().parent / "data" / "all_time_xi.db",
+            Path("/var/task/data/all_time_xi.db"),
+            Path("/var/task/api/data/all_time_xi.db"),
+            Path("data/all_time_xi.db"),
+            Path("api/data/all_time_xi.db"),
+        ]
+        found = next((p for p in candidates if p.exists() and p.stat().st_size > 1000000), None)
+        if found:
+            shutil.copy2(str(found), str(TMP_DB))
+    DB_PATH = str(TMP_DB) if TMP_DB.exists() else str(BASE_DB)
 else:
     DB_PATH = os.environ.get("DB_PATH", str(BASE_DB))
 
@@ -1288,9 +1306,21 @@ def admin_list_audit_logs(limit: int = 50):
 # 8. SHAREABLE URL ROUTES WITH OPENGRAPH SOCIAL META TAGS (/team/{slug}, /match/{slug})
 # ==============================================================================
 def render_spa_with_og_tags(title: str, description: str, image_url: str, initial_route_js: str = "") -> HTMLResponse:
-    index_html_path = ROOT_DIR / "public" / "index.html"
-    with open(index_html_path, encoding="utf-8") as f:
-        html = f.read()
+    candidates = [
+        ROOT_DIR / "public" / "index.html",
+        ROOT_DIR / "api" / "public" / "index.html",
+        Path(__file__).resolve().parent / "public" / "index.html",
+        Path("/var/task/public/index.html"),
+        Path("/var/task/api/public/index.html"),
+        Path("public/index.html"),
+        Path("api/public/index.html"),
+    ]
+    index_html_path = next((p for p in candidates if p.exists()), None)
+    if index_html_path and index_html_path.exists():
+        with open(index_html_path, encoding="utf-8") as f:
+            html = f.read()
+    else:
+        html = "<html><body><h1>ALL-TIME XI</h1></body></html>"
     og_block = f"""
     <meta property="og:title" content="{title}" />
     <meta property="og:description" content="{description}" />
@@ -1348,5 +1378,14 @@ def index_page():
         "/api/lineups/brazil-all-time-xi/png?layout=landscape"
     )
 
-os.makedirs("public", exist_ok=True)
-app.mount("/static", StaticFiles(directory="public"), name="static")
+public_candidates = [
+    ROOT_DIR / "public",
+    ROOT_DIR / "api" / "public",
+    Path(__file__).resolve().parent / "public",
+    Path("/var/task/public"),
+    Path("/var/task/api/public"),
+    Path("public"),
+]
+public_dir = next((p for p in public_candidates if p.exists()), ROOT_DIR / "public")
+os.makedirs(str(public_dir), exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(public_dir)), name="static")
