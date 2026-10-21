@@ -78,4 +78,18 @@ if init_error is None:
                 media_type="text/plain"
             )
 
+if init_error is None:
+    from fastapi import Request as _Req
+    from fastapi.responses import JSONResponse as _JSON
+
+    @app.get("/__health")
+    async def health_check(req: _Req):
+        return _JSON({
+            "ok": True,
+            "commit": "c99f802",
+            "scope_path": req.scope.get("path"),
+            "url": str(req.url),
+            "headers": {k: v for k, v in req.headers.items() if k.startswith("x-")},
+        })
+
 handler = app
