@@ -1,0 +1,175 @@
+{
+  "schema_version": "1.0",
+  "project_id": "all-time-xi",
+  "project_name": "ALL-TIME XI",
+  "description": "FIFA 세계랭킹 상위 30개국 및 대한민국 역대 성인 남자 A매치 30회 이상 출전 레전드 3,864명 기반 베스트11 전술판 제작·공유 및 인터랙티브 축구 데이터 아카이브",
+  "status": "PUBLIC",
+  "primary_agent": "Antigravity",
+  "tech_stack": [
+    "Python 3.12",
+    "FastAPI",
+    "SQLite3",
+    "Pillow (PIL)",
+    "Vanilla JavaScript",
+    "TailwindCSS",
+    "Vercel Serverless Function"
+  ],
+  "repository": "https://github.com/raspos/all-time-xi",
+  "deployment_url": "https://all-time-xi.vercel.app/",
+  "last_reviewed": "2026-10-20T10:00:00+09:00",
+  "features": {
+    "completed": [
+      "FIFA 세계랭킹 상위 30개국 + 대한민국(31개국) 탐색 및 2026-10-07 스냅샷 분리 저장",
+      "성인 남자 A매치 30회 이상 공식 기록 검증 선수 3,864명 데이터베이스 구축",
+      "선수 한글(영문) 표준 병기 포맷 (예: 손흥민 (Son Heung-min), 펠레 (Pelé))",
+      "A매치 29회 이하 출전 선수 후보 제외 및 서버 강제 저장 차단",
+      "복수 국가 A대표팀 출전 선수 기록 분리 원칙 적용 (알프레도 디 스테파노 등)",
+      "독일 역사적 승계(서독 포함, 동독 분리) 및 구 소련·유고슬라비아 자동 귀속 방지",
+      "주포지션 및 부포지션 기반 슬롯 포지션 적합도 실시간 자동 판정",
+      "동일 선수 중복 배치 클라이언트 및 서버 이중 차단",
+      "포지션 클릭 시 A매치 출전 경기 많은 순(official_caps DESC) 정렬 및 직접 검색",
+      "SVG 인터랙티브 축구 잔디 피치 렌더링 및 4종 테마 지원",
+      "Pillow 기반 고해상도 PNG(세로형 1080×1350, 가로형 1200×675, 2배율) 실시간 렌더링",
+      "사진 없는 고전 선수 국가대표팀 컬러 유니폼 엠블럼 자동 폴백 그래픽 렌더링",
+      "고유 공유 URL(/team/{slug}) 생성, 타 세션 열람 및 원클릭 복제 수정",
+      "관리자 단건 등록/수정, 선수 병합, CSV 대량 임포트 및 감사 로그 적재",
+      "169건의 출처 간 출전수 불일치(Discrepancy) 추적 및 품질 보증 대시보드"
+    ],
+    "in_progress": [
+      "Vercel 배포 환경에서 7종 포메이션 선택 버튼 클릭 반응성 복구",
+      "사용자 요청에 따른 AI 가상 대결(Arena) 관련 잔여 UI 요소 전면 삭제",
+      "초고속 부트스트랩 API(/api/bootstrap) Vercel 서버리스 라우팅 안정화"
+    ],
+    "planned": [
+      "Vercel 서버리스 임시 파일시스템(/tmp) 대비 영구 외장 DB(Supabase / PostgreSQL) 연동",
+      "모바일 화면 전용 터치 스왑 및 바텀시트 UI 개선",
+      "월드컵 우승 멤버, 발롱도르 수상자, 센추리클럽 전용 테마 퀵 필터 추가",
+      "2026-11-18 차기 FIFA 랭킹 발표 스냅샷 갱신 파이프라인 수립"
+    ]
+  },
+  "data_sources": [
+    {
+      "name": "RSSSF Countrywise International Records",
+      "scope": "1900s–2026-07 글로벌 A대표팀 최다 출전 및 득점 아카이브",
+      "license": "학술·연구 인용 허용 (출처 명시)",
+      "status": "VERIFIED"
+    },
+    {
+      "name": "Wikipedia International Footballers Lists",
+      "scope": "31개국 A대표팀 출전 선수 포지션, 생몰년, 각국 축구협회(FA) 인용 통계",
+      "license": "CC BY-SA 4.0",
+      "status": "VERIFIED"
+    },
+    {
+      "name": "Wikidata & Wikimedia Commons",
+      "scope": "한국어 표기 라벨, 엔티티 ID, 자유 라이선스 초상 사진",
+      "license": "CC0 1.0 / CC BY-SA / Public Domain",
+      "status": "VERIFIED"
+    },
+    {
+      "name": "dcaribou/transfermarkt-datasets",
+      "scope": "1990s–2026-07 현대 선수 세부 포지션, 주발, 신장, 클럽 메타데이터",
+      "license": "CC0 1.0 Public Domain",
+      "status": "VERIFIED"
+    },
+    {
+      "name": "FIFA Official World Ranking",
+      "scope": "2026-10-07 발표 공식 남자 세계 랭킹 상위 30개국",
+      "license": "공식 발표 통계 인용",
+      "status": "VERIFIED"
+    }
+  ],
+  "known_issues": [
+    {
+      "id": "ISSUE-001",
+      "title": "라이브 사이트 포메이션 선택 버튼 클릭 반응 없음",
+      "severity": "CRITICAL",
+      "impact": "전술판에서 포메이션(4-4-2, 3-5-2 등) 변경 불가",
+      "root_cause": "Vercel 배포 번들 내 app.js의 포메이션 초기화 시점과 slots 배열 참조 정합성 불일치",
+      "suggested_fix": "DEFAULT_FORMATIONS 상수와 그룹 보존 initBuilderSlotsForFormation 로직이 포함된 app.js를 배포에 반영"
+    },
+    {
+      "id": "ISSUE-002",
+      "title": "AI 대결 관련 UI 잔재 노출",
+      "severity": "MODERATE",
+      "impact": "사용자 혼선 및 불필요한 기능 메뉴 노출",
+      "root_cause": "기능 축소 결정 후 UI 버튼 및 배너 일부 잔존",
+      "suggested_fix": "헤더 네비게이션, 홈 히어로 배너, 저장 완료 카드의 AI 버튼 완전 소거"
+    },
+    {
+      "id": "ISSUE-003",
+      "title": "Vercel 서버리스 환경 저장 데이터 휘발 가능성",
+      "severity": "MODERATE",
+      "impact": "신규 생성된 공유 URL이 서버리스 인스턴스 재생성 시 404 발생 위험",
+      "root_cause": "Vercel Lambda의 읽기 전용 파일시스템으로 인해 SQLite가 /tmp에서 동작함",
+      "suggested_fix": "외장 클라우드 PostgreSQL(Supabase 등) 연동"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "포메이션 선택 인터랙션 정상화 (DEFAULT_FORMATIONS 배포)",
+      "priority": "P0",
+      "assigned_role": "DEVELOPER",
+      "status": "TODO",
+      "dependencies": [],
+      "acceptance_criteria": "all-time-xi.vercel.app에서 7개 포메이션 클릭 시 즉각 포메이션이 전환되고 기존 선수가 올바른 포지션 군으로 유지됨"
+    },
+    {
+      "id": "TASK-002",
+      "title": "AI 가상 대결 관련 UI 메뉴 및 버튼 전면 소거",
+      "priority": "P0",
+      "assigned_role": "DEVELOPER",
+      "status": "TODO",
+      "dependencies": [],
+      "acceptance_criteria": "헤더, 홈 배너, 빌더 저장 카드, 목록 카드에서 AI 대결 관련 탭 및 버튼이 전혀 노출되지 않음"
+    },
+    {
+      "id": "TASK-003",
+      "title": "저장 라인업 영구 외장 데이터베이스(Supabase) 연동",
+      "priority": "P1",
+      "assigned_role": "DEVELOPER",
+      "status": "TODO",
+      "dependencies": ["TASK-001"],
+      "acceptance_criteria": "서버리스 인스턴스 재생성과 무관하게 신규 생성된 팀 슬러그(/team/{slug})가 영구 보존됨"
+    },
+    {
+      "id": "TASK-004",
+      "title": "모바일 뷰포트 터치 인터랙션 최적화",
+      "priority": "P2",
+      "assigned_role": "DESIGNER",
+      "status": "TODO",
+      "dependencies": [],
+      "acceptance_criteria": "스마트폰 화면에서 스크롤 간섭 없이 원터치로 선수 교체 및 스왑이 부드럽게 작동함"
+    },
+    {
+      "id": "TASK-005",
+      "title": "월드컵 우승 멤버 및 센추리클럽 퀵 필터 태그 추가",
+      "priority": "P3",
+      "assigned_role": "DATA",
+      "status": "TODO",
+      "dependencies": [],
+      "acceptance_criteria": "선수 후보 목록에서 월드컵 우승 멤버 또는 100경기 이상 선수만 원클릭으로 필터링 가능"
+    }
+  ],
+  "pm_decisions": [
+    {
+      "topic": "AI 대결 기능 정책",
+      "question": "AI 가상 대결 기능을 완전 코드 삭제할 것인가, UI 비활성화/숨김 처리할 것인가?",
+      "recommendation": "UI에서 완벽히 제거하되 백엔드 시뮬레이션 자산은 보존",
+      "status": "PENDING"
+    },
+    {
+      "topic": "영구 데이터베이스 도입",
+      "question": "Vercel 서버리스 임시 파일 한계를 극복하기 위해 Supabase(PostgreSQL) 무료 티어를 도입할 것인가?",
+      "recommendation": "공유 URL의 영구 보존을 위해 Supabase 연동 승인 권장",
+      "status": "PENDING"
+    }
+  ],
+  "next_action": "TASK-001(포메이션 선택 인터랙션 정상화) 및 TASK-002(AI 대결 UI 완전 소거) 배포 검증",
+  "verification": {
+    "build": "PASS",
+    "tests": "PASS",
+    "deployment": "VERIFIED"
+  }
+}

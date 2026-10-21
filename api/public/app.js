@@ -18,13 +18,1063 @@
     { id: 'royal_turf', name: '로열 챔피언스 터프', dark: '#0c4a3e', light: '#115e50', border: 'rgba(241,245,249,0.82)' }
   ];
 
+const DEFAULT_FORMATIONS = [
+  {
+    "code": "4-3-3",
+    "name_ko": "4-3-3 (클래식 윙 포워드 & 역삼각형 중원)",
+    "slots": [
+      {
+        "slot_index": 0,
+        "slot_code": "GK",
+        "label_ko": "골키퍼",
+        "group": "GK",
+        "x": 50,
+        "y": 88,
+        "compatible": [
+          "GK"
+        ]
+      },
+      {
+        "slot_index": 1,
+        "slot_code": "LB",
+        "label_ko": "좌측 풀백",
+        "group": "DF",
+        "x": 15,
+        "y": 73,
+        "compatible": [
+          "LB",
+          "LWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 2,
+        "slot_code": "LCB",
+        "label_ko": "좌측 센터백",
+        "group": "DF",
+        "x": 37,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "LCB",
+          "RCB",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 3,
+        "slot_code": "RCB",
+        "label_ko": "우측 센터백",
+        "group": "DF",
+        "x": 63,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "RCB",
+          "LCB",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 4,
+        "slot_code": "RB",
+        "label_ko": "우측 풀백",
+        "group": "DF",
+        "x": 85,
+        "y": 73,
+        "compatible": [
+          "RB",
+          "RWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 5,
+        "slot_code": "LCM",
+        "label_ko": "좌측 중앙 미드필더",
+        "group": "MF",
+        "x": 28,
+        "y": 48,
+        "compatible": [
+          "CM",
+          "CAM",
+          "CDM",
+          "LM"
+        ]
+      },
+      {
+        "slot_index": 6,
+        "slot_code": "CDM",
+        "label_ko": "수비형 미드필더",
+        "group": "MF",
+        "x": 50,
+        "y": 56,
+        "compatible": [
+          "CDM",
+          "CM",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 7,
+        "slot_code": "RCM",
+        "label_ko": "우측 중앙 미드필더",
+        "group": "MF",
+        "x": 72,
+        "y": 48,
+        "compatible": [
+          "CM",
+          "CAM",
+          "CDM",
+          "RM"
+        ]
+      },
+      {
+        "slot_index": 8,
+        "slot_code": "LW",
+        "label_ko": "좌측 윙어",
+        "group": "FW",
+        "x": 18,
+        "y": 23,
+        "compatible": [
+          "LW",
+          "LM",
+          "ST",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 9,
+        "slot_code": "ST",
+        "label_ko": "스트라이커",
+        "group": "FW",
+        "x": 50,
+        "y": 17,
+        "compatible": [
+          "ST",
+          "CF",
+          "LW",
+          "RW",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 10,
+        "slot_code": "RW",
+        "label_ko": "우측 윙어",
+        "group": "FW",
+        "x": 82,
+        "y": 23,
+        "compatible": [
+          "RW",
+          "RM",
+          "ST",
+          "CAM"
+        ]
+      }
+    ]
+  },
+  {
+    "code": "4-2-3-1",
+    "name_ko": "4-2-3-1 (더블 볼란치 & 플레이메이커)",
+    "slots": [
+      {
+        "slot_index": 0,
+        "slot_code": "GK",
+        "label_ko": "골키퍼",
+        "group": "GK",
+        "x": 50,
+        "y": 88,
+        "compatible": [
+          "GK"
+        ]
+      },
+      {
+        "slot_index": 1,
+        "slot_code": "LB",
+        "label_ko": "좌측 풀백",
+        "group": "DF",
+        "x": 15,
+        "y": 73,
+        "compatible": [
+          "LB",
+          "LWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 2,
+        "slot_code": "LCB",
+        "label_ko": "좌측 센터백",
+        "group": "DF",
+        "x": 37,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "LCB",
+          "RCB",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 3,
+        "slot_code": "RCB",
+        "label_ko": "우측 센터백",
+        "group": "DF",
+        "x": 63,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "RCB",
+          "LCB",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 4,
+        "slot_code": "RB",
+        "label_ko": "우측 풀백",
+        "group": "DF",
+        "x": 85,
+        "y": 73,
+        "compatible": [
+          "RB",
+          "RWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 5,
+        "slot_code": "LDM",
+        "label_ko": "좌측 수비형 미드필더",
+        "group": "MF",
+        "x": 35,
+        "y": 56,
+        "compatible": [
+          "CDM",
+          "CM"
+        ]
+      },
+      {
+        "slot_index": 6,
+        "slot_code": "RDM",
+        "label_ko": "우측 수비형 미드필더",
+        "group": "MF",
+        "x": 65,
+        "y": 56,
+        "compatible": [
+          "CDM",
+          "CM"
+        ]
+      },
+      {
+        "slot_index": 7,
+        "slot_code": "LAM",
+        "label_ko": "좌측 공격형 미드필더",
+        "group": "MF",
+        "x": 20,
+        "y": 35,
+        "compatible": [
+          "LW",
+          "CAM",
+          "LM",
+          "ST"
+        ]
+      },
+      {
+        "slot_index": 8,
+        "slot_code": "CAM",
+        "label_ko": "중앙 공격형 미드필더",
+        "group": "MF",
+        "x": 50,
+        "y": 35,
+        "compatible": [
+          "CAM",
+          "CM",
+          "ST",
+          "LW",
+          "RW"
+        ]
+      },
+      {
+        "slot_index": 9,
+        "slot_code": "RAM",
+        "label_ko": "우측 공격형 미드필더",
+        "group": "MF",
+        "x": 80,
+        "y": 35,
+        "compatible": [
+          "RW",
+          "CAM",
+          "RM",
+          "ST"
+        ]
+      },
+      {
+        "slot_index": 10,
+        "slot_code": "ST",
+        "label_ko": "스트라이커",
+        "group": "FW",
+        "x": 50,
+        "y": 17,
+        "compatible": [
+          "ST",
+          "CF",
+          "LW",
+          "RW"
+        ]
+      }
+    ]
+  },
+  {
+    "code": "4-4-2",
+    "name_ko": "4-4-2 (클래식 투톱 & 두 줄 수비)",
+    "slots": [
+      {
+        "slot_index": 0,
+        "slot_code": "GK",
+        "label_ko": "골키퍼",
+        "group": "GK",
+        "x": 50,
+        "y": 88,
+        "compatible": [
+          "GK"
+        ]
+      },
+      {
+        "slot_index": 1,
+        "slot_code": "LB",
+        "label_ko": "좌측 풀백",
+        "group": "DF",
+        "x": 15,
+        "y": 73,
+        "compatible": [
+          "LB",
+          "LWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 2,
+        "slot_code": "LCB",
+        "label_ko": "좌측 센터백",
+        "group": "DF",
+        "x": 37,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "LCB",
+          "RCB",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 3,
+        "slot_code": "RCB",
+        "label_ko": "우측 센터백",
+        "group": "DF",
+        "x": 63,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "RCB",
+          "LCB",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 4,
+        "slot_code": "RB",
+        "label_ko": "우측 풀백",
+        "group": "DF",
+        "x": 85,
+        "y": 73,
+        "compatible": [
+          "RB",
+          "RWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 5,
+        "slot_code": "LM",
+        "label_ko": "좌측 미드필더",
+        "group": "MF",
+        "x": 16,
+        "y": 47,
+        "compatible": [
+          "LW",
+          "LM",
+          "CM",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 6,
+        "slot_code": "LCM",
+        "label_ko": "좌측 중앙 미드필더",
+        "group": "MF",
+        "x": 39,
+        "y": 50,
+        "compatible": [
+          "CM",
+          "CDM",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 7,
+        "slot_code": "RCM",
+        "label_ko": "우측 중앙 미드필더",
+        "group": "MF",
+        "x": 61,
+        "y": 50,
+        "compatible": [
+          "CM",
+          "CDM",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 8,
+        "slot_code": "RM",
+        "label_ko": "우측 미드필더",
+        "group": "MF",
+        "x": 84,
+        "y": 47,
+        "compatible": [
+          "RW",
+          "RM",
+          "CM",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 9,
+        "slot_code": "LS",
+        "label_ko": "좌측 스트라이커",
+        "group": "FW",
+        "x": 36,
+        "y": 19,
+        "compatible": [
+          "ST",
+          "CF",
+          "LW",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 10,
+        "slot_code": "RS",
+        "label_ko": "우측 스트라이커",
+        "group": "FW",
+        "x": 64,
+        "y": 19,
+        "compatible": [
+          "ST",
+          "CF",
+          "RW",
+          "CAM"
+        ]
+      }
+    ]
+  },
+  {
+    "code": "4-1-4-1",
+    "name_ko": "4-1-4-1 (원 볼란치 & 2선 압박 블록)",
+    "slots": [
+      {
+        "slot_index": 0,
+        "slot_code": "GK",
+        "label_ko": "골키퍼",
+        "group": "GK",
+        "x": 50,
+        "y": 88,
+        "compatible": [
+          "GK"
+        ]
+      },
+      {
+        "slot_index": 1,
+        "slot_code": "LB",
+        "label_ko": "좌측 풀백",
+        "group": "DF",
+        "x": 15,
+        "y": 73,
+        "compatible": [
+          "LB",
+          "LWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 2,
+        "slot_code": "LCB",
+        "label_ko": "좌측 센터백",
+        "group": "DF",
+        "x": 37,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "LCB",
+          "RCB"
+        ]
+      },
+      {
+        "slot_index": 3,
+        "slot_code": "RCB",
+        "label_ko": "우측 센터백",
+        "group": "DF",
+        "x": 63,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "RCB",
+          "LCB"
+        ]
+      },
+      {
+        "slot_index": 4,
+        "slot_code": "RB",
+        "label_ko": "우측 풀백",
+        "group": "DF",
+        "x": 85,
+        "y": 73,
+        "compatible": [
+          "RB",
+          "RWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 5,
+        "slot_code": "CDM",
+        "label_ko": "수비형 미드필더",
+        "group": "MF",
+        "x": 50,
+        "y": 60,
+        "compatible": [
+          "CDM",
+          "CM",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 6,
+        "slot_code": "LM",
+        "label_ko": "좌측 미드필더",
+        "group": "MF",
+        "x": 16,
+        "y": 41,
+        "compatible": [
+          "LW",
+          "LM",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 7,
+        "slot_code": "LCM",
+        "label_ko": "좌측 공격형/중앙 MF",
+        "group": "MF",
+        "x": 38,
+        "y": 43,
+        "compatible": [
+          "CM",
+          "CAM",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 8,
+        "slot_code": "RCM",
+        "label_ko": "우측 공격형/중앙 MF",
+        "group": "MF",
+        "x": 62,
+        "y": 43,
+        "compatible": [
+          "CM",
+          "CAM",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 9,
+        "slot_code": "RM",
+        "label_ko": "우측 미드필더",
+        "group": "MF",
+        "x": 84,
+        "y": 41,
+        "compatible": [
+          "RW",
+          "RM",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 10,
+        "slot_code": "ST",
+        "label_ko": "스트라이커",
+        "group": "FW",
+        "x": 50,
+        "y": 17,
+        "compatible": [
+          "ST",
+          "CF"
+        ]
+      }
+    ]
+  },
+  {
+    "code": "3-5-2",
+    "name_ko": "3-5-2 (스리백 & 윙백 지배형 투톱)",
+    "slots": [
+      {
+        "slot_index": 0,
+        "slot_code": "GK",
+        "label_ko": "골키퍼",
+        "group": "GK",
+        "x": 50,
+        "y": 88,
+        "compatible": [
+          "GK"
+        ]
+      },
+      {
+        "slot_index": 1,
+        "slot_code": "LCB",
+        "label_ko": "좌측 스토퍼/센터백",
+        "group": "DF",
+        "x": 26,
+        "y": 74,
+        "compatible": [
+          "CB",
+          "LB"
+        ]
+      },
+      {
+        "slot_index": 2,
+        "slot_code": "CB",
+        "label_ko": "중앙 센터백/리베로",
+        "group": "DF",
+        "x": 50,
+        "y": 76,
+        "compatible": [
+          "CB",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 3,
+        "slot_code": "RCB",
+        "label_ko": "우측 스토퍼/센터백",
+        "group": "DF",
+        "x": 74,
+        "y": 74,
+        "compatible": [
+          "CB",
+          "RB"
+        ]
+      },
+      {
+        "slot_index": 4,
+        "slot_code": "LWB",
+        "label_ko": "좌측 윙백",
+        "group": "MF",
+        "x": 13,
+        "y": 50,
+        "compatible": [
+          "LB",
+          "LWB",
+          "LW",
+          "LM"
+        ]
+      },
+      {
+        "slot_index": 5,
+        "slot_code": "LCM",
+        "label_ko": "좌측 중앙 미드필더",
+        "group": "MF",
+        "x": 34,
+        "y": 48,
+        "compatible": [
+          "CM",
+          "CAM",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 6,
+        "slot_code": "CDM",
+        "label_ko": "수비형 미드필더",
+        "group": "MF",
+        "x": 50,
+        "y": 56,
+        "compatible": [
+          "CDM",
+          "CM"
+        ]
+      },
+      {
+        "slot_index": 7,
+        "slot_code": "RCM",
+        "label_ko": "우측 중앙 미드필더",
+        "group": "MF",
+        "x": 66,
+        "y": 48,
+        "compatible": [
+          "CM",
+          "CAM",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 8,
+        "slot_code": "RWB",
+        "label_ko": "우측 윙백",
+        "group": "MF",
+        "x": 87,
+        "y": 50,
+        "compatible": [
+          "RB",
+          "RWB",
+          "RW",
+          "RM"
+        ]
+      },
+      {
+        "slot_index": 9,
+        "slot_code": "LS",
+        "label_ko": "좌측 스트라이커",
+        "group": "FW",
+        "x": 36,
+        "y": 19,
+        "compatible": [
+          "ST",
+          "CF",
+          "LW",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 10,
+        "slot_code": "RS",
+        "label_ko": "우측 스트라이커",
+        "group": "FW",
+        "x": 64,
+        "y": 19,
+        "compatible": [
+          "ST",
+          "CF",
+          "RW",
+          "CAM"
+        ]
+      }
+    ]
+  },
+  {
+    "code": "3-4-3",
+    "name_ko": "3-4-3 (토탈 풋볼 & 스리톱 하이프레싱)",
+    "slots": [
+      {
+        "slot_index": 0,
+        "slot_code": "GK",
+        "label_ko": "골키퍼",
+        "group": "GK",
+        "x": 50,
+        "y": 88,
+        "compatible": [
+          "GK"
+        ]
+      },
+      {
+        "slot_index": 1,
+        "slot_code": "LCB",
+        "label_ko": "좌측 센터백",
+        "group": "DF",
+        "x": 26,
+        "y": 74,
+        "compatible": [
+          "CB",
+          "LB"
+        ]
+      },
+      {
+        "slot_index": 2,
+        "slot_code": "CB",
+        "label_ko": "중앙 센터백",
+        "group": "DF",
+        "x": 50,
+        "y": 76,
+        "compatible": [
+          "CB",
+          "CDM"
+        ]
+      },
+      {
+        "slot_index": 3,
+        "slot_code": "RCB",
+        "label_ko": "우측 센터백",
+        "group": "DF",
+        "x": 74,
+        "y": 74,
+        "compatible": [
+          "CB",
+          "RB"
+        ]
+      },
+      {
+        "slot_index": 4,
+        "slot_code": "LM",
+        "label_ko": "좌측 윙백/미드필더",
+        "group": "MF",
+        "x": 14,
+        "y": 50,
+        "compatible": [
+          "LB",
+          "LWB",
+          "LM",
+          "LW"
+        ]
+      },
+      {
+        "slot_index": 5,
+        "slot_code": "LCM",
+        "label_ko": "좌측 중앙 미드필더",
+        "group": "MF",
+        "x": 38,
+        "y": 52,
+        "compatible": [
+          "CM",
+          "CDM",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 6,
+        "slot_code": "RCM",
+        "label_ko": "우측 중앙 미드필더",
+        "group": "MF",
+        "x": 62,
+        "y": 52,
+        "compatible": [
+          "CM",
+          "CDM",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 7,
+        "slot_code": "RM",
+        "label_ko": "우측 윙백/미드필더",
+        "group": "MF",
+        "x": 86,
+        "y": 50,
+        "compatible": [
+          "RB",
+          "RWB",
+          "RM",
+          "RW"
+        ]
+      },
+      {
+        "slot_index": 8,
+        "slot_code": "LW",
+        "label_ko": "좌측 윙포워드",
+        "group": "FW",
+        "x": 20,
+        "y": 23,
+        "compatible": [
+          "LW",
+          "ST",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 9,
+        "slot_code": "ST",
+        "label_ko": "스트라이커",
+        "group": "FW",
+        "x": 50,
+        "y": 17,
+        "compatible": [
+          "ST",
+          "CF",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 10,
+        "slot_code": "RW",
+        "label_ko": "우측 윙포워드",
+        "group": "FW",
+        "x": 80,
+        "y": 23,
+        "compatible": [
+          "RW",
+          "ST",
+          "CAM"
+        ]
+      }
+    ]
+  },
+  {
+    "code": "4-2-2-2",
+    "name_ko": "4-2-2-2 (매직 스퀘어 & 듀얼 플레이메이커)",
+    "slots": [
+      {
+        "slot_index": 0,
+        "slot_code": "GK",
+        "label_ko": "골키퍼",
+        "group": "GK",
+        "x": 50,
+        "y": 88,
+        "compatible": [
+          "GK"
+        ]
+      },
+      {
+        "slot_index": 1,
+        "slot_code": "LB",
+        "label_ko": "좌측 풀백",
+        "group": "DF",
+        "x": 15,
+        "y": 73,
+        "compatible": [
+          "LB",
+          "LWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 2,
+        "slot_code": "LCB",
+        "label_ko": "좌측 센터백",
+        "group": "DF",
+        "x": 37,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "LCB",
+          "RCB"
+        ]
+      },
+      {
+        "slot_index": 3,
+        "slot_code": "RCB",
+        "label_ko": "우측 센터백",
+        "group": "DF",
+        "x": 63,
+        "y": 75,
+        "compatible": [
+          "CB",
+          "RCB",
+          "LCB"
+        ]
+      },
+      {
+        "slot_index": 4,
+        "slot_code": "RB",
+        "label_ko": "우측 풀백",
+        "group": "DF",
+        "x": 85,
+        "y": 73,
+        "compatible": [
+          "RB",
+          "RWB",
+          "CB"
+        ]
+      },
+      {
+        "slot_index": 5,
+        "slot_code": "LDM",
+        "label_ko": "좌측 수비형 미드필더",
+        "group": "MF",
+        "x": 36,
+        "y": 56,
+        "compatible": [
+          "CDM",
+          "CM"
+        ]
+      },
+      {
+        "slot_index": 6,
+        "slot_code": "RDM",
+        "label_ko": "우측 수비형 미드필더",
+        "group": "MF",
+        "x": 64,
+        "y": 56,
+        "compatible": [
+          "CDM",
+          "CM"
+        ]
+      },
+      {
+        "slot_index": 7,
+        "slot_code": "LAM",
+        "label_ko": "좌측 공격형 미드필더",
+        "group": "MF",
+        "x": 26,
+        "y": 36,
+        "compatible": [
+          "CAM",
+          "LW",
+          "CM",
+          "LM"
+        ]
+      },
+      {
+        "slot_index": 8,
+        "slot_code": "RAM",
+        "label_ko": "우측 공격형 미드필더",
+        "group": "MF",
+        "x": 74,
+        "y": 36,
+        "compatible": [
+          "CAM",
+          "RW",
+          "CM",
+          "RM"
+        ]
+      },
+      {
+        "slot_index": 9,
+        "slot_code": "LS",
+        "label_ko": "좌측 스트라이커",
+        "group": "FW",
+        "x": 36,
+        "y": 18,
+        "compatible": [
+          "ST",
+          "CF",
+          "LW",
+          "CAM"
+        ]
+      },
+      {
+        "slot_index": 10,
+        "slot_code": "RS",
+        "label_ko": "우측 스트라이커",
+        "group": "FW",
+        "x": 64,
+        "y": 18,
+        "compatible": [
+          "ST",
+          "CF",
+          "RW",
+          "CAM"
+        ]
+      }
+    ]
+  }
+];
+
   const state = {
-    view: 'home', // 'home' | 'builder' | 'arena' | 'database' | 'quality' | 'admin'
+    view: 'home', // 'home' | 'builder' | 'database' | 'quality' | 'admin'
     countries: [],
     rankingDate: '2026-10-07',
-    formations: [],
+    formations: DEFAULT_FORMATIONS,
     savedLineups: [],
-    aiStatus: { configured: false, active_provider: 'gemini', providers: {} },
 
     // Home filters
     homeSearch: '',
@@ -117,7 +1167,7 @@
   }
 
   function updateNavHighlight() {
-    ['home', 'builder', 'arena', 'database', 'quality'].forEach(v => {
+    ['home', 'builder', 'database', 'quality'].forEach(v => {
       const btn = document.getElementById(`nav-${v}`);
       if (!btn) return;
       if (state.view === v) {
@@ -402,16 +1452,13 @@
             </h1>
             <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl">
               1950·60년대 펠레·가린샤·보비 찰턴부터 1970·80년대 마라도나·베켄바워·크라위프·지쿠, 1990·2000년대 호나우두·지단·말디니, 2010·2020년대 메시·호날두·네이마르·음바페까지.<br/>
-              <strong>실제 A매치 30회 이상 출전 기록이 검증된 3,817명</strong>의 데이터베이스로 나만의 전술판을 제작해 고해상도 PNG로 저장하고, <strong>Gemini AI 가상 대결</strong>로 최강팀을 가리세요.
+              <strong>실제 A매치 30회 이상 출전 기록이 검증된 3,817명</strong>의 데이터베이스로 나만의 전술판을 제작하고, 고해상도 PNG 이미지 및 공유 링크로 간직하세요.
             </p>
 
-            <!-- 3 Primary Action Buttons (Section 9) -->
+            <!-- Primary Action Buttons -->
             <div class="flex flex-wrap gap-3 pt-2">
               <button onclick="window.app.startCountryBuilder('BRA')" class="px-5 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm sm:text-base shadow-lg shadow-amber-400/20 transition flex items-center gap-2">
                 <span>⚽ 나만의 역대 베스트11 만들기</span>
-              </button>
-              <button onclick="window.app.navigate('arena')" class="px-5 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm sm:text-base shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
-                <span>⚡ 다른 드림팀과 AI 대결</span>
               </button>
               <button onclick="window.app.navigate('database')" class="px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-sm sm:text-base transition flex items-center gap-2">
                 <span>🔍 역대 국가대표 선수 검색</span>
@@ -715,10 +1762,6 @@
                class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/40 text-xs font-bold">
               ✨ 2x 초고해상도 PNG
             </a>
-            <button onclick="window.app.sendToArena('${escapeHtml(state.lastSavedLineupResult.share_slug)}')"
-                    class="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-black">
-              ⚡ 이 팀으로 AI 가상 대결 →
-            </button>
           </div>
         </div>
       ` : ''}
@@ -1103,10 +2146,6 @@
                       🔗 링크
                     </button>
                   </div>
-                  <button onclick="window.app.sendToArena('${escapeHtml(l.share_slug)}')"
-                          class="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition">
-                    ⚡ AI 대결 →
-                  </button>
                 </div>
               </div>
             `;
@@ -1120,6 +2159,20 @@
   // VIEW 3: AI VIRTUAL MATCHUP ARENA (Section 7)
   // ============================================================================
   function renderArenaView() {
+    return `
+      <div class="py-24 text-center max-w-lg mx-auto">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-3xl">
+          ⚽
+        </div>
+        <h2 class="text-xl font-black text-white mb-2">AI 가상 대결 기능이 비활성화되었습니다</h2>
+        <p class="text-slate-400 text-sm leading-relaxed mb-6">
+          현재 ALL-TIME XI는 30개국 레전드 선수를 기반으로 한 <strong>베스트11 전술판 제작·공유 및 고해상도 PNG 저장</strong>에 집중하고 있습니다.
+        </p>
+        <button onclick="window.app.navigate('builder')" class="px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm transition">
+          ⚽ 베스트11 만들기로 이동
+        </button>
+      </div>
+    `;
     const teamAObj = state.savedLineups.find(l => l.share_slug === state.arenaTeamASlug);
     const teamBObj = state.savedLineups.find(l => l.share_slug === state.arenaTeamBSlug);
     const snapA = teamAObj ? teamAObj.snapshot : null;
@@ -1884,42 +2937,6 @@
     }
   }
 
-  function openApiKeyModal() {
-    const modalRoot = document.getElementById('modal-root');
-    modalRoot.innerHTML = `
-      <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onclick="window.app.closeModal()">
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-black text-white">🔑 서버 AI API 키 설정</h3>
-            <button onclick="window.app.closeModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 font-bold">✕</button>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            AI 가상 대결은 클라이언트 노출 없이 <strong>서버에서 직접 Gemini API(기본) 또는 OpenAI API를 호출</strong>합니다.
-            환경변수(<code>GEMINI_API_KEY</code>)가 설정되지 않은 경우 아래에서 서버 메모리에 즉시 등록할 수 있습니다.
-          </p>
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-bold text-slate-400 mb-1">AI 공급자 (Provider)</label>
-              <select id="modal-ai-provider" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold">
-                <option value="gemini">Google Gemini API (기본 권장)</option>
-                <option value="openai">OpenAI API (GPT-4o / mini)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-400 mb-1">API Key 입력</label>
-              <input id="modal-ai-key" type="password" placeholder="AIzaSy... 또는 sk-..."
-                     class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono" />
-            </div>
-          </div>
-          <div class="flex justify-end gap-2 pt-2">
-            <button onclick="window.app.closeModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">닫기</button>
-            <button onclick="window.app.saveApiKeyFromModal()" class="px-4 py-2 rounded-xl bg-amber-400 text-slate-950 text-xs font-black">서버에 키 등록</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
   function closeModal() {
     const modalRoot = document.getElementById('modal-root');
     if (modalRoot) modalRoot.innerHTML = '';
@@ -1941,16 +2958,16 @@
     else if (state.view === 'admin') root.innerHTML = renderAdminView();
   }
 
-  async function initBuilderSlotsForFormation(formationCode, preserveExistingPlayers = true) {
-    const fm = state.formations.find(f => f.code === formationCode) || state.formations[0];
+  function initBuilderSlotsForFormation(formationCode, preserveExistingPlayers = true) {
+    const list = (state.formations && state.formations.length) ? state.formations : DEFAULT_FORMATIONS;
+    const fm = list.find(f => f.code === formationCode) || list[0];
     if (!fm) return;
     state.builderFormationCode = fm.code;
-    const oldPlayers = preserveExistingPlayers ? state.builderSlots.map(s => s.player) : [];
 
-    state.builderSlots = fm.slots.map((sdef, idx) => {
-      const p = oldPlayers[idx] || null;
-      const suit = p ? computeClientSuitability(p, sdef) : null;
-      return {
+    const rawSlots = Array.isArray(fm.slots) ? fm.slots : (typeof fm.slots === 'string' ? JSON.parse(fm.slots) : (fm.slots_json ? JSON.parse(fm.slots_json) : []));
+
+    if (!preserveExistingPlayers || !state.builderSlots.length) {
+      state.builderSlots = rawSlots.map((sdef, idx) => ({
         slot_index: idx,
         slot_code: sdef.slot_code,
         label_ko: sdef.label_ko,
@@ -1958,11 +2975,69 @@
         x: sdef.x,
         y: sdef.y,
         compatible: sdef.compatible || [],
-        player: p,
-        is_captain: p ? (state.builderCaptainId === (p.id || p.player_id)) : false,
-        suitability: suit
-      };
+        player: null,
+        is_captain: false,
+        suitability: null
+      }));
+      return;
+    }
+
+    // Preserve existing placed players by matching positions and position groups
+    const existingPlayers = state.builderSlots.map(s => s.player).filter(Boolean);
+    const usedIds = new Set();
+    const newSlots = rawSlots.map((sdef, idx) => ({
+      slot_index: idx,
+      slot_code: sdef.slot_code,
+      label_ko: sdef.label_ko,
+      group: sdef.group,
+      x: sdef.x,
+      y: sdef.y,
+      compatible: sdef.compatible || [],
+      player: null,
+      is_captain: false,
+      suitability: null
+    }));
+
+    // 1st pass: exact slot_code match (e.g. GK -> GK, LB -> LB, ST -> ST)
+    newSlots.forEach(ns => {
+      const match = existingPlayers.find(p => !usedIds.has(p.id || p.player_id) && p.primary_position === ns.slot_code);
+      if (match) {
+        usedIds.add(match.id || match.player_id);
+        ns.player = match;
+      }
     });
+
+    // 2nd pass: position group match (DF -> DF, MF -> MF, FW -> FW)
+    newSlots.forEach(ns => {
+      if (!ns.player) {
+        const match = existingPlayers.find(p => !usedIds.has(p.id || p.player_id) && p.position_group === ns.group);
+        if (match) {
+          usedIds.add(match.id || match.player_id);
+          ns.player = match;
+        }
+      }
+    });
+
+    // 3rd pass: any remaining unused outfield players
+    newSlots.forEach(ns => {
+      if (!ns.player && ns.group !== 'GK') {
+        const match = existingPlayers.find(p => !usedIds.has(p.id || p.player_id) && p.primary_position !== 'GK');
+        if (match) {
+          usedIds.add(match.id || match.player_id);
+          ns.player = match;
+        }
+      }
+    });
+
+    // Recompute suitability and captaincy
+    newSlots.forEach(ns => {
+      if (ns.player) {
+        ns.suitability = computeClientSuitability(ns.player, ns);
+        ns.is_captain = Boolean(state.builderCaptainId && (ns.player.id || ns.player.player_id) === state.builderCaptainId);
+      }
+    });
+
+    state.builderSlots = newSlots;
   }
 
   async function loadCountryPlayersForBuilder(fifaCode) {
@@ -2025,7 +3100,7 @@
     state.lastSavedLineupResult = null;
     state.swapSourceSlotIndex = null;
     await loadCountryPlayersForBuilder(fifaCode);
-    await initBuilderSlotsForFormation(state.builderFormationCode, false);
+    initBuilderSlotsForFormation(state.builderFormationCode, false);
     autoFillBuilderLegendXI();
     state.view = 'builder';
     render();
@@ -2129,7 +3204,7 @@
       state.builderDescription = snap.team_description || '';
       state.builderCaptainId = snap.captain_player_id;
 
-      await initBuilderSlotsForFormation(snap.formation_code, false);
+      initBuilderSlotsForFormation(snap.formation_code, false);
       (snap.players || []).forEach(sp => {
         const targetSlot = state.builderSlots[sp.slot_index];
         if (targetSlot) {
@@ -2192,56 +3267,51 @@
           const bData = await bResp.json();
           state.countries = bData.countries || [];
           state.rankingDate = bData.ranking_snapshot_date || '2026-10-07';
-          state.formations = bData.formations || [];
+          state.formations = (bData.formations && bData.formations.length) ? bData.formations : DEFAULT_FORMATIONS;
           state.savedLineups = bData.lineups || [];
-          state.aiStatus = bData.ai_status || { configured: true, active_provider: 'engine' };
           state.builderCountryCode = 'BRA';
           state.builderCountryPlayers = bData.initial_builder_players || [];
-          await initBuilderSlotsForFormation('4-3-3', false);
+          initBuilderSlotsForFormation('4-3-3', false);
           autoFillBuilderLegendXI();
         } else {
           throw new Error('Bootstrap fallback');
         }
       } catch (err) {
-        const [cResp, fResp, lResp, aiResp] = await Promise.all([
-          fetch('/api/countries'),
-          fetch('/api/formations'),
-          fetch('/api/lineups'),
-          fetch('/api/ai/status')
-        ]);
-        const cData = await cResp.json();
-        const fData = await fResp.json();
-        const lData = await lResp.json();
-        state.countries = cData.countries || [];
-        state.rankingDate = cData.ranking_snapshot_date || '2026-10-07';
-        state.formations = fData.formations || [];
-        state.savedLineups = lData.lineups || [];
-        state.aiStatus = await aiResp.json();
-        await loadCountryPlayersForBuilder('BRA');
-        await initBuilderSlotsForFormation('4-3-3', false);
-        autoFillBuilderLegendXI();
+        try {
+          const [cResp, fResp, lResp] = await Promise.all([
+            fetch('/api/countries'),
+            fetch('/api/formations'),
+            fetch('/api/lineups')
+          ]);
+          const cData = await cResp.json();
+          const fData = await fResp.json();
+          const lData = await lResp.json();
+          state.countries = cData.countries || [];
+          state.rankingDate = cData.ranking_snapshot_date || '2026-10-07';
+          state.formations = (fData.formations && fData.formations.length) ? fData.formations : DEFAULT_FORMATIONS;
+          state.savedLineups = lData.lineups || [];
+          await loadCountryPlayersForBuilder('BRA');
+          initBuilderSlotsForFormation('4-3-3', false);
+          autoFillBuilderLegendXI();
+        } catch (e) {
+          state.formations = DEFAULT_FORMATIONS;
+          initBuilderSlotsForFormation('4-3-3', false);
+        }
       }
 
-      // Check if opened via a direct Share URL (/team/{slug} or /match/{slug})
+      // Check if opened via a direct Share URL (/team/{slug})
       const shareCtx = window.__INITIAL_SHARE_CONTEXT__;
       if (shareCtx && shareCtx.type === 'team' && shareCtx.slug) {
         await loadSavedLineupIntoBuilder(shareCtx.slug);
         showToast('공유된 베스트11 전술판을 불러왔습니다!', 'info');
         return;
-      } else if (shareCtx && shareCtx.type === 'match' && shareCtx.slug) {
-        const mResp = await fetch(`/api/ai/comparisons/${encodeURIComponent(shareCtx.slug)}`);
-        if (mResp.ok) {
-          state.arenaResult = await mResp.json();
-          state.view = 'arena';
-          render();
-          return;
-        }
       }
 
       render();
     },
 
     async navigate(view) {
+      if (view === 'arena') view = 'builder';
       state.view = view;
       if (view === 'database' && state.dbPlayers.length === 0) {
         await loadDatabasePlayers();
@@ -2292,11 +3362,11 @@
       render();
     },
 
-    async changeBuilderFormation(code) {
-      await initBuilderSlotsForFormation(code, true);
+    changeBuilderFormation(code) {
+      initBuilderSlotsForFormation(code, true);
       state.lastSavedLineupResult = null;
       render();
-      showToast(`포메이션이 ${code}로 전환되었으며 선수별 포지션 적합도를 재계산했습니다.`, 'info');
+      showToast(`포메이션이 ${code}로 변경되었습니다.`, 'info');
     },
 
     onBuilderMetaChange(field, val) {
@@ -2472,57 +3542,6 @@
     saveCurrentLineup,
     exportCurrentLineupPng,
 
-    async sendToArena(slug) {
-      state.arenaTeamASlug = slug;
-      if (state.arenaTeamBSlug === slug && state.savedLineups.length > 1) {
-        const other = state.savedLineups.find(l => l.share_slug !== slug);
-        if (other) state.arenaTeamBSlug = other.share_slug;
-      }
-      state.view = 'arena';
-      render();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-
-    setArenaTeam(side, slug) {
-      if (side === 'A') state.arenaTeamASlug = slug;
-      else state.arenaTeamBSlug = slug;
-      render();
-    },
-
-    setArenaProvider(prov) {
-      state.arenaProvider = prov;
-    },
-
-    async runArenaComparison() {
-      state.arenaLoading = true;
-      render();
-      try {
-        const resp = await fetch('/api/ai/compare', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            team_a_slug: state.arenaTeamASlug,
-            team_b_slug: state.arenaTeamBSlug,
-            provider: state.arenaProvider || 'engine'
-          })
-        });
-        const data = await resp.json();
-        state.arenaLoading = false;
-        if (!resp.ok) {
-          throw new Error(data.detail || '전술 맞대결 비교 실패');
-        }
-        state.arenaResult = data;
-        render();
-        const el = document.getElementById('ai-analysis-report');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        showToast('AI 가상 대결 분석이 완료되었습니다!', 'success');
-      } catch (e) {
-        state.arenaLoading = false;
-        render();
-        showToast(e.message, 'error');
-      }
-    },
-
     async onDbFilter(field, val) {
       if (field === 'country') state.dbCountryCode = val;
       if (field === 'search') state.dbSearch = val;
@@ -2541,28 +3560,7 @@
     },
 
     openPlayerModal,
-    openApiKeyModal,
     closeModal,
-
-    async saveApiKeyFromModal() {
-      const prov = document.getElementById('modal-ai-provider').value;
-      const key = document.getElementById('modal-ai-key').value;
-      try {
-        const resp = await fetch('/api/admin/api-key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider: prov, api_key: key })
-        });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.detail || 'API 키 저장 오류');
-        state.aiStatus = data.status;
-        closeModal();
-        render();
-        showToast(`${prov.toUpperCase()} API 키가 서버에 안전하게 등록되었습니다.`, 'success');
-      } catch (e) {
-        showToast(e.message, 'error');
-      }
-    },
 
     async copyShareUrl(url) {
       try {
