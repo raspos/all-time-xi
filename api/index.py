@@ -44,21 +44,28 @@ if init_error is None:
 
     @app.middleware("http")
     async def vercel_middleware(request: Request, call_next):
-        # 1. Restore original path from Vercel rewrite headers if rewritten
-        for hdr in ["x-matched-path", "x-invoke-path", "x-forwarded-uri", "x-original-url"]:
-            val = request.headers.get(hdr)
-            if val and val.startswith("/") and not val.startswith("/api/index"):
-                clean_path = val.split("?")[0]
-                request.scope["path"] = clean_path
-                break
+        # Restore original path when Vercel sets scope["path"] to the function path
+        # (e.g. /api/index instead of the original /api/bootstrap).
+        # Try every header Vercel may send, preferring ones that look like the original URL.
+        current_path = request.scope.get("path", "/")
+        function_paths = ("/api/index", "/api/index.py")
+        if current_path.rstrip("/") in (p.rstrip("/") for p in function_paths) or current_path in function_paths:
+            for hdr in ["x-forwarded-uri", "x-original-url", "x-invoke-path", "x-matched-path"]:
+                val = request.headers.get(hdr)
+                if val and val.startswith("/"):
+                    candidate = val.split("?")[0]
+                    if not candidate.rstrip("/") in (p.rstrip("/") for p in function_paths):
+                        request.scope["path"] = candidate
+                        if "raw_path" in request.scope:
+                            request.scope["raw_path"] = candidate.encode()
+                        break
 
-        # 2. Diagnostic endpoint: if x-debug header is 1
+        # Diagnostic endpoint
         if request.headers.get("x-debug") == "1":
             return JSONResponse({
                 "scope_path": request.scope.get("path"),
-                "url_path": request.url.path,
+                "url_path": str(request.url),
                 "headers": dict(request.headers),
-                "matched_path": request.headers.get("x-matched-path"),
                 "routes": [r.path for r in app.routes if hasattr(r, "path")]
             })
 

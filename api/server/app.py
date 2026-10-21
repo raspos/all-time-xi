@@ -114,43 +114,6 @@ def get_db() -> sqlite3.Connection:
         pass
     return conn
 
-# ==============================================================================
-# FAST DIRECT STATIC FILE HANDLER (Bypasses ASGI Mount, Ultra-Fast CDN Caching)
-# ==============================================================================
-@app.get("/static/{file_path:path}")
-def serve_static_file(file_path: str):
-    candidates = [
-        ROOT_DIR / "public" / file_path,
-        ROOT_DIR / "api" / "public" / file_path,
-        Path(__file__).resolve().parent / "public" / file_path,
-        Path(__file__).resolve().parent.parent / "public" / file_path,
-        Path("/var/task/public") / file_path,
-        Path("/var/task/api/public") / file_path,
-        Path("public") / file_path,
-        Path("api/public") / file_path,
-    ]
-    found = next((p for p in candidates if p.exists() and p.is_file()), None)
-    if not found:
-        fname = Path(file_path).name
-        for search_root in [ROOT_DIR, Path(__file__).resolve().parent, Path("/var/task"), Path(".")]:
-            if search_root.exists():
-                for p in search_root.rglob(fname):
-                    if p.is_file():
-                        found = p
-                        break
-            if found:
-                break
-
-    if found and found.exists():
-        mime = "application/javascript" if file_path.endswith(".js") else ("text/css" if file_path.endswith(".css") else "application/octet-stream")
-        return FileResponse(
-            str(found),
-            media_type=mime,
-            headers={
-                "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
-            }
-        )
-    return Response(f"File {file_path} not found", status_code=404)
 
 # ==============================================================================
 # HIGH-SPEED BOOTSTRAP API (Loads all initial data in 1 single HTTP request)
