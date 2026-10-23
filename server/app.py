@@ -1251,22 +1251,25 @@ def proxy_image(url: str = Query(...)):
     if not url or not (url.startswith("http://") or url.startswith("https://")):
         raise HTTPException(status_code=400, detail="Invalid URL")
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        resp = requests.get(url, headers=headers, timeout=3.5)
-        if resp.status_code == 200 and len(resp.content) > 100:
-            content_type = resp.headers.get("Content-Type", "image/jpeg")
-            return Response(
-                content=resp.content,
-                media_type=content_type,
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                    "Cache-Control": "public, max-age=604800, s-maxage=2592000",
-                }
-            )
-    except Exception as e:
-        logger.warning(f"proxy_image error for {url}: {e}")
+        import urllib.request
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        )
+        with urllib.request.urlopen(req, timeout=4.0) as resp:
+            content = resp.read()
+            content_type = resp.headers.get_content_type() or "image/jpeg"
+            if len(content) > 50:
+                return Response(
+                    content=content,
+                    media_type=content_type,
+                    headers={
+                        "Access-Control-Allow-Origin": "*",
+                        "Cache-Control": "public, max-age=604800, s-maxage=2592000",
+                    }
+                )
+    except Exception:
+        pass
 
     # Fallback transparent 1x1 PNG so canvas capture never breaks
     transparent_png = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
