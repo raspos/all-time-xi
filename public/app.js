@@ -1763,7 +1763,7 @@ const DEFAULT_FORMATIONS = [
                     class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800 text-xs font-bold transition">
               초기화
             </button>
-            <button onclick="window.app.shareLineupImageDirectly()"
+            <button onclick="window.app.openLineupImagePreview()"
                     class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/25 transition flex items-center gap-1.5"
                     title="전술판 사진/이미지를 카카오톡으로 바로 전송합니다 (모바일: 카톡 사진 전송, PC: 클립보드 복사 후 Ctrl+V)">
               <span class="text-sm">💬</span>
@@ -2258,12 +2258,12 @@ const DEFAULT_FORMATIONS = [
                       <span>📂</span>
                       <span>전술판 불러오기</span>
                     </button>
-                    <a href="/api/lineups/${escapeHtml(l.share_slug)}/png?layout=portrait" download
-                       class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow whitespace-nowrap"
-                       title="고해상도 세로형 PNG 다운로드">
+                    <button onclick="window.app.openSavedLineupImagePreview('${escapeHtml(teamTitle)}', '${escapeHtml(l.share_slug)}')"
+                            class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow whitespace-nowrap"
+                            title="전술판 고해상도 완성 이미지 미리보기 & 새 탭에서 열기">
                       <span>🖼️</span>
-                      <span>PNG</span>
-                    </a>
+                      <span>이미지 미리보기</span>
+                    </button>
                   </div>
                   <div class="flex items-center gap-1.5 shrink-0">
                     <button onclick="window.app.shareSavedLineupDirectly('${escapeHtml(teamTitle)}', '${escapeHtml(l.share_slug)}')"
@@ -3427,76 +3427,71 @@ const DEFAULT_FORMATIONS = [
     showImageShareModal(dataUrl, blob, teamTitle, copiedToClipboard);
   }
 
-  function showImageShareModal(dataUrl, blob, teamTitle, copiedToClipboard) {
+  function showImageShareModal(dataUrl, blob, teamTitle, copiedToClipboard, slug = '') {
     const modalRoot = document.getElementById('modal-root');
     if (!modalRoot) return;
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const countryObj = getCountryByCode(state.builderCountryCode) || {};
     const teamName = teamTitle || `${countryObj.name_ko || ''} 역대 베스트11`;
+    const fullPngUrl = dataUrl.startsWith('http') || dataUrl.startsWith('/') || dataUrl.startsWith('data:') 
+      ? dataUrl 
+      : `${window.location.origin}${dataUrl}`;
 
     modalRoot.innerHTML = `
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in" onclick="if(event.target === this) window.app.closeModal()">
-        <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden max-h-[92vh] flex flex-col">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div class="flex items-center gap-2">
-              <span class="text-xl">💬</span>
-              <h3 class="text-base sm:text-lg font-black text-slate-100">카카오톡 전술판 이미지 공유</h3>
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in" onclick="if(event.target === this) window.app.closeModal()">
+        <div class="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden max-h-[95vh] flex flex-col">
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3.5 border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">🖼️</span>
+              <div>
+                <h3 class="text-base sm:text-lg font-black text-slate-100 flex items-center gap-2">
+                  <span>${escapeHtml(teamName)}</span>
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-bold border border-amber-400/30">완성 이미지</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">고해상도 완성 전술판 미리보기 및 카카오톡 전송</p>
+              </div>
             </div>
-            <button onclick="window.app.closeModal()" class="text-slate-400 hover:text-slate-200 text-xl font-bold p-1">✕</button>
+            <button onclick="window.app.closeModal()" class="text-slate-400 hover:text-white text-2xl font-bold p-1 leading-none">✕</button>
           </div>
 
-          <div class="my-4 overflow-y-auto flex-1 space-y-3.5 pr-1">
-            ${copiedToClipboard ? `
-              <div class="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
-                <span class="text-xl">📋</span>
-                <div>
-                  <div class="font-black text-emerald-200">전술판 이미지가 클립보드에 복사되었습니다!</div>
-                  <div class="text-xs text-emerald-400/90 mt-0.5">카카오톡 대화창에서 <strong>Ctrl + V</strong> (붙여넣기)를 누르면 사진이 바로 전송됩니다.</div>
-                </div>
-              </div>
-            ` : `
-              <div class="p-3.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
-                <span class="text-xl">💡</span>
-                <div>
-                  <div class="font-black text-yellow-200">고해상도 전술판 이미지가 준비되었습니다!</div>
-                  <div class="text-xs text-yellow-400/90 mt-0.5">아래 '이미지 복사' 후 카톡 대화창에 붙여넣기(Ctrl+V) 하세요.</div>
-                </div>
-              </div>
-            `}
-
-            <!-- Preview Image -->
-            <div class="rounded-xl border border-slate-800 bg-slate-950 p-2 overflow-hidden flex items-center justify-center max-h-56">
-              <img src="${dataUrl}" alt="전술판 미리보기" class="max-h-52 object-contain rounded-lg shadow-md" />
-            </div>
-
-            <!-- Platform Guide -->
-            <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-300 text-xs space-y-2">
-              <div class="font-bold text-amber-300 flex items-center gap-1.5">
-                <span>💻 PC 카카오톡 공유 방법</span>
-              </div>
-              <div class="text-slate-300 text-xs leading-relaxed space-y-1">
-                <div>1. 이미지가 클립보드에 복사되어 있습니다.</div>
-                <div>2. 아래 <strong>[카카오톡 PC버전 열기]</strong>를 누르거나 카톡 창을 엽니다.</div>
-                <div>3. 원하는 친구/대화방에서 <strong>Ctrl + V</strong>(붙여넣기) 후 전송을 누르면 끝!</div>
-              </div>
-
-              <div class="font-bold text-sky-300 flex items-center gap-1.5 pt-2 border-t border-slate-700/50">
-                <span>📱 스마트폰 카카오톡</span>
-              </div>
-              <div class="text-slate-400 text-[11px] leading-relaxed">
-                모바일에서는 아래 <strong>[카톡 사진 바로 전송]</strong>을 누르면 카카오톡 공유 창이 즉시 열립니다.
+          <!-- Quick Tip Bar -->
+          <div class="mt-3.5 p-3 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+            <div class="flex items-center gap-2 text-xs text-amber-200">
+              <span class="text-lg shrink-0">💡</span>
+              <div class="leading-relaxed">
+                이미지 위에서 <strong>마우스 우클릭 → [이미지 복사]</strong> 후 카톡에 <strong>Ctrl + V</strong> 하거나, 카톡 창으로 <strong>드래그</strong>하세요!
               </div>
             </div>
-          </div>
-
-          <!-- Modal Actions -->
-          <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
-            <button onclick="window.app.copyImageToClipboard()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5">
-              <span>📋 이미지 다시 복사</span>
+            <button onclick="window.open('${fullPngUrl}', '_blank')" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs whitespace-nowrap transition flex items-center gap-1.5 shadow shrink-0">
+              <span>🖼️ 새 탭에서 원본 열기</span>
             </button>
+          </div>
+
+          <!-- Large High-Res Image Preview Box -->
+          <div class="my-3.5 rounded-xl border border-slate-800 bg-slate-950 p-2 overflow-auto flex-1 flex items-center justify-center max-h-[58vh] group relative cursor-zoom-in" onclick="window.open('${fullPngUrl}', '_blank')" title="클릭하면 새 탭에서 고화질 원본으로 열립니다">
+            <img src="${fullPngUrl}" alt="전술판 고해상도 완성 이미지" class="max-h-[54vh] w-auto object-contain rounded-lg shadow-2xl transition group-hover:scale-[1.01]" />
+            <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-slate-900/80 backdrop-blur-sm border border-slate-700 text-[11px] text-slate-300 font-bold opacity-0 group-hover:opacity-100 transition pointer-events-none">
+              🔍 클릭하여 새 탭에서 크게 보기
+            </div>
+          </div>
+
+          <!-- Action Footer Buttons -->
+          <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
             <div class="flex items-center gap-2">
-              <button onclick="window.app.launchPcKakaoTalk()" class="px-3.5 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
+              <button onclick="window.open('${fullPngUrl}', '_blank')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5">
+                <span>🖼️ 새 탭에서 열기</span>
+              </button>
+              <button onclick="window.app.copyImageToClipboard()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5">
+                <span>📋 이미지 복사</span>
+              </button>
+              <a href="${fullPngUrl}" download="ALL-TIME-XI-${teamName}.png" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5">
+                <span>💾 PNG 다운로드</span>
+              </a>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="window.app.launchPcKakaoTalk()" class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
                 <span>💬 카카오톡 열기</span>
               </button>
               <button onclick="window.app.closeModal()" class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 text-xs sm:text-sm font-semibold border border-slate-800">
@@ -3507,6 +3502,49 @@ const DEFAULT_FORMATIONS = [
         </div>
       </div>
     `;
+  }
+
+  function openSavedLineupImagePreview(teamTitle, slug) {
+    const pngUrl = `/api/lineups/${slug}/png?layout=portrait`;
+    lastCapturedBlob = null;
+    lastCapturedDataUrl = pngUrl;
+    lastCapturedTitle = teamTitle;
+    showImageShareModal(pngUrl, null, teamTitle, false, slug);
+  }
+
+  async function openLineupImagePreview() {
+    const filled = state.builderSlots.filter(s => s.player).length;
+    if (filled < 11) {
+      const proceed = confirm(`현재 11명 중 ${filled}명만 배치되어 있습니다.
+이 상태로 전술판 이미지를 미리보기 하시겠습니까?`);
+      if (!proceed) return;
+    }
+
+    showToast('전술판 고해상도 이미지를 준비하고 있습니다...', 'info');
+
+    const countryObj = getCountryByCode(state.builderCountryCode) || {};
+    const teamTitle = state.builderTeamName || `${countryObj.name_ko || state.builderCountryCode} 역대 올타임 베스트11`;
+    lastCapturedTitle = teamTitle;
+
+    const { blob, dataUrl } = await capturePitchAsBlob();
+    if (!blob || !dataUrl) {
+      if (state.lastSavedLineupResult && state.lastSavedLineupResult.share_slug) {
+        return openSavedLineupImagePreview(teamTitle, state.lastSavedLineupResult.share_slug);
+      }
+      showToast('이미지 캡처 중입니다. 잠시 후 다시 시도해주세요.', 'warning');
+      return;
+    }
+
+    // Try copying to clipboard immediately as a convenience
+    let copied = false;
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        copied = true;
+      } catch (e) {}
+    }
+
+    showImageShareModal(dataUrl, blob, teamTitle, copied);
   }
 
   function launchPcKakaoTalk() {
