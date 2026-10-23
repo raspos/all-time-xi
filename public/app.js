@@ -1709,9 +1709,15 @@ const DEFAULT_FORMATIONS = [
                     class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800 text-xs font-bold transition">
               초기화
             </button>
+            <button onclick="window.app.shareLineupDirectly()"
+                    class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/25 transition flex items-center gap-1.5"
+                    title="현재 전술판을 카카오톡 또는 SNS로 즉시 공유합니다">
+              <span class="text-sm">💬</span>
+              <span>카카오톡 바로 공유</span>
+            </button>
             <button onclick="window.app.saveCurrentLineup(false)"
-                    class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-emerald-500/20 transition">
-              💾 팀 완성 · 공유 URL 생성 (${filledCount}/11)
+                    class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-emerald-500/20 transition">
+              💾 팀 저장 (${filledCount}/11)
             </button>
             <button onclick="window.app.exportCurrentLineupPng('portrait', 1)"
                     class="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-amber-400/20 transition">
@@ -3161,6 +3167,70 @@ const DEFAULT_FORMATIONS = [
     }
   }
 
+  async function shareLineupDirectly() {
+    const filled = state.builderSlots.filter(s => s.player).length;
+    if (filled < 11) {
+      const proceed = confirm(`현재 11명 중 ${filled}명만 배치되어 있습니다.\n이 상태로 전술판을 카카오톡으로 공유하시겠습니까?`);
+      if (!proceed) return;
+    }
+
+    showToast('카카오톡 공유 링크를 생성하는 중입니다...', 'info');
+
+    let shareUrl = window.location.href;
+    let teamTitle = state.builderTeamName || `${state.builderCountryCode} 역대 최강 베스트11`;
+    try {
+      const res = await saveCurrentLineup(true);
+      if (res && res.share_slug) {
+        shareUrl = `${window.location.origin}/team/${res.share_slug}`;
+        if (res.lineup && res.lineup.team_name) {
+          teamTitle = res.lineup.team_name;
+        }
+      }
+    } catch (e) {
+      console.warn('Auto-save error before share:', e);
+    }
+
+    const shareTitle = `[ALL-TIME XI] ${teamTitle}`;
+    const shareText = `${shareTitle}\n내가 선정한 국가대표 역대 최강 베스트11 전술판을 확인해보세요!\n${shareUrl}`;
+
+    // 1. Web Share API (Opens native KakaoTalk on smartphones and tablets)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: `${shareTitle} — 내가 만든 국가대표 역대 최강 베스트11 전술판을 확인하세요!`,
+          url: shareUrl
+        });
+        showToast('카카오톡 공유가 실행되었습니다!', 'success');
+        return;
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.warn('navigator.share failed:', err);
+        } else {
+          return;
+        }
+      }
+    }
+
+    // 2. Mobile KakaoTalk Direct Scheme Fallback
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      const kakaoScheme = `kakaotalk://msg/send?text=${encodeURIComponent(shareText)}`;
+      window.location.href = kakaoScheme;
+      setTimeout(async () => {
+        await copyShareUrl(shareUrl);
+        showToast('카카오톡 공유 링크가 복사되었습니다! 대화창에 붙여넣기(Ctrl+V) 하세요.', 'success');
+      }, 1200);
+      return;
+    }
+
+    // 3. Desktop / Web: Copy share URL and open Kakao web share
+    await copyShareUrl(shareUrl);
+    const kakaoWebUrl = `https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+    window.open(kakaoWebUrl, '_blank', 'width=600,height=520');
+    showToast('카카오톡 공유 링크가 복사되었습니다! 카톡 대화창에 바로 붙여넣기(Ctrl+V) 하세요.', 'success');
+  }
+
   async function exportCurrentLineupPng(layout = 'portrait', scale = 1) {
     const pitchEl = document.getElementById('tactical-pitch-board');
     if (window.html2canvas && pitchEl) {
@@ -3565,6 +3635,7 @@ const DEFAULT_FORMATIONS = [
     },
 
     saveCurrentLineup,
+    shareLineupDirectly,
     exportCurrentLineupPng,
 
     async onDbFilter(field, val) {
