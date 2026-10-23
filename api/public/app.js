@@ -3431,14 +3431,38 @@ const DEFAULT_FORMATIONS = [
   let lastCapturedDataUrl = null;
   let lastCapturedTitle = '';
 
+  async function ensureLineupSaved() {
+    if (state.lastSavedLineupResult && state.lastSavedLineupResult.share_slug) {
+      return state.lastSavedLineupResult.share_slug;
+    }
+    const payload = buildLineupPayload();
+    if (!payload) return null;
+    try {
+      const resp = await fetch('/api/lineups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        state.lastSavedLineupResult = data;
+        return data.share_slug;
+      }
+    } catch (e) {
+      console.warn('Auto-save for image capture error:', e);
+    }
+    return null;
+  }
+
   async function capturePitchAsBlob() {
+    // 1. Try html2canvas first (client-side DOM capture)
     const pitchEl = document.getElementById('tactical-pitch-board');
     if (window.html2canvas && pitchEl) {
       try {
         const canvas = await window.html2canvas(pitchEl, {
           scale: 2.0,
           useCORS: true,
-          allowTaint: false,
+          allowTaint: true,
           backgroundColor: '#070b14',
           logging: false
         });
@@ -3450,13 +3474,16 @@ const DEFAULT_FORMATIONS = [
           return { blob, dataUrl };
         }
       } catch (err) {
-        console.warn('html2canvas blob capture error:', err);
+        console.warn('html2canvas client capture error, falling back to server PNG:', err);
       }
     }
-    // Fallback: try fetching current saved lineup PNG or default og image
-    if (state.lastSavedLineupResult && state.lastSavedLineupResult.share_slug) {
+
+    // 2. Guaranteed server PNG generation:
+    // Auto-save lineup if not yet saved to obtain a real share slug
+    const slug = await ensureLineupSaved();
+    if (slug) {
       try {
-        const sResp = await fetch(`/api/lineups/${state.lastSavedLineupResult.share_slug}/png?layout=portrait`);
+        const sResp = await fetch(`/api/lineups/${slug}/png?layout=portrait`);
         if (sResp.ok) {
           const sBlob = await sResp.blob();
           const sDataUrl = URL.createObjectURL(sBlob);
@@ -3464,8 +3491,11 @@ const DEFAULT_FORMATIONS = [
           lastCapturedDataUrl = sDataUrl;
           return { blob: sBlob, dataUrl: sDataUrl };
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Server PNG fetch fallback error:', e);
+      }
     }
+
     return { blob: null, dataUrl: null };
   }
 
@@ -3562,17 +3592,15 @@ const DEFAULT_FORMATIONS = [
             <button onclick="window.app.closeModal()" class="text-slate-400 hover:text-white text-2xl font-bold p-1 leading-none">✕</button>
           </div>
 
-          <!-- Quick Tip Bar -->
-          <div class="mt-3.5 p-3 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-            <div class="flex items-center gap-2 text-xs text-amber-200">
-              <span class="text-lg shrink-0">💡</span>
-              <div class="leading-relaxed">
-                이미지 위에서 <strong>마우스 우클릭 → [이미지 복사]</strong> 후 카톡에 <strong>Ctrl + V</strong> 하거나, 카톡 창으로 <strong>드래그</strong>하세요!
-              </div>
+          <!-- Prominent Kakao Sharing Guide Banner -->
+          <div class="mt-3.5 p-4 rounded-xl bg-gradient-to-r from-amber-400/20 via-yellow-400/15 to-emerald-500/15 border border-amber-400/40 space-y-2">
+            <div class="flex items-center gap-2 text-amber-300 font-black text-sm">
+              <span class="text-xl">💬</span>
+              <span>카카오톡 전송 안내: 이미지가 클립보드에 복사되었습니다!</span>
             </div>
-            <button onclick="window.open('${fullPngUrl}', '_blank')" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs whitespace-nowrap transition flex items-center gap-1.5 shadow shrink-0">
-              <span>🖼️ 새 탭에서 원본 열기</span>
-            </button>
+            <p class="text-xs text-slate-200 leading-relaxed">
+              PC 카카오톡 대화창을 클릭한 후 <strong class="px-2 py-0.5 rounded bg-slate-950 text-amber-300 font-mono border border-slate-700">Ctrl + V (붙여넣기)</strong>를 누르시면 고해상도 전술판 이미지가 채팅방에 즉시 전송됩니다.
+            </p>
           </div>
 
           <!-- Large High-Res Image Preview Box -->
@@ -3622,12 +3650,11 @@ const DEFAULT_FORMATIONS = [
   async function openLineupImagePreview() {
     const filled = state.builderSlots.filter(s => s.player).length;
     if (filled < 11) {
-      const proceed = confirm(`현재 11명 중 ${filled}명만 배치되어 있습니다.
-이 상태로 전술판 이미지를 미리보기 하시겠습니까?`);
+      const proceed = confirm(`현재 11명 중 ${filled}명만 배치되어 있습니다.\n이 상태로 전술판 이미지를 카카오톡으로 공유하시겠습니까?`);
       if (!proceed) return;
     }
 
-    showToast('전술판 고해상도 이미지를 준비하고 있습니다...', 'info');
+    showToast('전술판 고해상도 완성 이미지를 준비하고 있습니다...', 'info');
 
     const countryObj = getCountryByCode(state.builderCountryCode) || {};
     const teamTitle = state.builderTeamName || `${countryObj.name_ko || state.builderCountryCode} 역대 올타임 베스트11`;
@@ -3635,23 +3662,43 @@ const DEFAULT_FORMATIONS = [
 
     const { blob, dataUrl } = await capturePitchAsBlob();
     if (!blob || !dataUrl) {
-      if (state.lastSavedLineupResult && state.lastSavedLineupResult.share_slug) {
-        return openSavedLineupImagePreview(teamTitle, state.lastSavedLineupResult.share_slug);
-      }
-      showToast('이미지 캡처 중입니다. 잠시 후 다시 시도해주세요.', 'warning');
+      showToast('이미지 생성에 실패했습니다. 선수를 배치한 후 다시 시도해주세요.', 'error');
       return;
     }
 
-    // Try copying to clipboard immediately as a convenience
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const fileName = `ALL-TIME-XI-${state.builderCountryCode || 'TEAM'}.png`;
+    const imageFile = new File([blob], fileName, { type: 'image/png' });
+
+    // 1. Mobile: Native Web Share API with real image file directly to KakaoTalk
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+      try {
+        await navigator.share({
+          files: [imageFile],
+          title: `[ALL-TIME XI] ${teamTitle}`,
+          text: `${teamTitle} 전술판 완성 이미지입니다! https://all-time-xi.vercel.app/`
+        });
+        showToast('카카오톡 사진 공유 창이 열렸습니다!', 'success');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    // 2. Desktop PC: Copy image directly to Clipboard (Ctrl+V into PC KakaoTalk)
     let copied = false;
     if (navigator.clipboard && window.ClipboardItem) {
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
         copied = true;
-      } catch (e) {}
+        showToast('✅ 전술판 이미지가 복사되었습니다! 카톡 대화창에서 Ctrl + V 하세요.', 'success');
+      } catch (e) {
+        console.warn('Clipboard write error:', e);
+      }
     }
 
-    showImageShareModal(dataUrl, blob, teamTitle, copied);
+    const slug = (state.lastSavedLineupResult && state.lastSavedLineupResult.share_slug) || '';
+    showImageShareModal(dataUrl, blob, teamTitle, copied, slug);
   }
 
   function launchPcKakaoTalk() {
@@ -3720,31 +3767,62 @@ const DEFAULT_FORMATIONS = [
   }
 
   async function shareSavedLineupDirectly(teamTitle, slug) {
+    showToast('카카오톡 전술판 완성 이미지를 준비하고 있습니다...', 'info');
     const shareUrl = `${window.location.origin}/team/${slug}`;
+    const pngUrl = `${window.location.origin}/api/lineups/${slug}/png?layout=portrait`;
 
-    // Always copy URL first so it is in user clipboard
+    let blob = null;
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      showToast('🔗 카톡 공유 링크가 복사되었습니다! 대화창에 Ctrl+V 하세요.', 'success');
-    } catch (e) {}
+      const resp = await fetch(pngUrl);
+      if (resp.ok) {
+        blob = await resp.blob();
+        lastCapturedBlob = blob;
+        lastCapturedDataUrl = pngUrl;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch lineup PNG for share', e);
+    }
 
-    // If mobile navigator.share is available, trigger it
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile && navigator.share) {
-      try {
-        await navigator.share({
-          title: `[ALL-TIME XI] ${teamTitle}`,
-          text: `${teamTitle} — 역대 국가대표 최강 베스트11 전술판!`,
-          url: shareUrl
-        });
-        return;
-      } catch (e) {
-        if (e.name === 'AbortError') return;
+
+    // 1. Mobile: Native Web Share API with real image file directly to KakaoTalk!
+    if (isMobile && blob) {
+      const fileName = `${slug}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `[ALL-TIME XI] ${teamTitle}`,
+            text: `${teamTitle} 전술판 완성 이미지입니다! ${shareUrl}`
+          });
+          showToast('카카오톡 사진 공유 창이 열렸습니다!', 'success');
+          return;
+        } catch (e) {
+          if (e.name === 'AbortError') return;
+        }
       }
     }
 
-    // Open image preview lightbox on PC so user can preview or copy image
-    openSavedLineupImagePreview(teamTitle, slug);
+    // 2. Desktop PC: Copy image directly to clipboard for instant Ctrl+V into KakaoTalk!
+    let copied = false;
+    if (blob && navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        copied = true;
+        showToast('✅ 전술판 이미지가 복사되었습니다! 카톡 대화창에서 Ctrl + V (붙여넣기) 하세요.', 'success');
+      } catch (e) {}
+    }
+
+    // Also copy URL to clipboard as companion
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch (e) {}
+
+    // Open guidance modal with image preview and copy/download
+    showImageShareModal(pngUrl, blob, teamTitle, copied, slug);
   }
 
   function showKakaoLinkShareModal(teamTitle, shareUrl, slug) {
