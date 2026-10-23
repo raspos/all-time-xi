@@ -1366,19 +1366,20 @@ const DEFAULT_FORMATIONS = [
         ? '#34d399'
         : ks;
 
-      const nodeSize = compact ? 'w-12 h-12 sm:w-14 sm:h-14' : 'w-16 h-16 sm:w-20 sm:h-20';
-      const nameMaxW = compact ? 'max-w-[96px] text-[10px]' : 'max-w-[130px] sm:max-w-[160px] text-xs sm:text-sm font-black';
+      // Perfectly proportioned node sizing to prevent any overlap
+      const nodeSize = compact ? 'w-9 h-9 sm:w-10 sm:h-10' : 'w-11 h-11 sm:w-13 sm:h-13';
+      const nameMaxW = compact ? 'max-w-[70px]' : 'max-w-[84px] sm:max-w-[104px]';
 
       if (!p) {
         return `
           <div class="pitch-node absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer group"
                style="left:${slot.x}%; top:${slot.y}%;"
                ${interactive ? `onclick="window.app.onPitchSlotClick(${idx})" ondragover="event.preventDefault()" ondrop="window.app.onPitchSlotDrop(event, ${idx})"` : ''}>
-            <div class="${nodeSize} rounded-full border-2 border-dashed ${isFocused ? 'border-amber-400 bg-amber-400/20 scale-110' : 'border-white/50 bg-slate-950/60 group-hover:border-amber-300'} flex flex-col items-center justify-center transition">
-              <span class="text-[10px] sm:text-xs font-black text-amber-300">${escapeHtml(slot.slot_code)}</span>
-              <span class="text-[9px] text-slate-300">+선택</span>
+            <div class="${nodeSize} rounded-full border-2 border-dashed ${isFocused ? 'border-amber-400 bg-amber-400/20 scale-105' : 'border-white/50 bg-slate-950/60 group-hover:border-amber-300'} flex flex-col items-center justify-center transition shadow-md">
+              <span class="text-[9px] sm:text-[10px] font-black text-amber-300 leading-none">${escapeHtml(slot.slot_code)}</span>
+              <span class="text-[8px] text-slate-300 leading-none mt-0.5">+선택</span>
             </div>
-            <div class="mt-1 px-2 py-0.5 rounded bg-slate-950/85 border border-slate-700 text-[10px] text-slate-300 font-semibold whitespace-nowrap">
+            <div class="mt-0.5 px-1.5 py-0.5 rounded bg-slate-950/90 border border-slate-700 text-[9px] text-slate-300 font-semibold whitespace-nowrap shadow">
               ${escapeHtml(slot.label_ko || slot.slot_code)}
             </div>
           </div>
@@ -1386,28 +1387,31 @@ const DEFAULT_FORMATIONS = [
       }
 
       const num = p.jersey_number || p.fallback_number || (idx + 1);
+      const displayName = p.name_ko || p.name_en || '선수';
+      const fullName = formatNameKoEn(p);
+
       return `
         <div class="pitch-node ${isSwapSelected ? 'selected-swap' : ''} absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer"
              style="left:${slot.x}%; top:${slot.y}%;"
              ${interactive ? `draggable="true" ondragstart="window.app.onPitchSlotDragStart(event, ${idx})" ondragover="event.preventDefault()" ondrop="window.app.onPitchSlotDrop(event, ${idx})" onclick="window.app.onPitchSlotClick(${idx})"` : `onclick="window.app.openPlayerModal(${p.player_id || p.id})"`}>
           <div class="relative">
             <!-- Slot code pill -->
-            <span class="absolute -top-1.5 -left-2 z-20 px-1.5 py-0.2 rounded bg-slate-950 text-[9px] sm:text-[10px] font-black text-white border" style="border-color:${ringColor}">
+            <span class="absolute -top-1.5 -left-2 z-20 px-1 py-0.2 rounded bg-slate-950 text-[8px] sm:text-[9px] font-black text-white border shadow" style="border-color:${ringColor}">
               ${escapeHtml(slot.slot_code)}
             </span>
-            ${isCap ? `<span class="absolute -top-1.5 -right-2 z-20 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-400 text-slate-950 text-[9px] sm:text-[10px] font-black flex items-center justify-center border border-slate-950 shadow" title="주장 (Captain)">C</span>` : ''}
+            ${isCap ? `<span class="absolute -top-1.5 -right-2 z-20 w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black flex items-center justify-center border border-slate-950 shadow" title="주장 (Captain)">C</span>` : ''}
             <!-- Portrait or Jersey Circle -->
-            <div class="relative ${nodeSize} rounded-full overflow-hidden flex items-center justify-center shadow-xl"
-                 style="background:${kp}; color:${kt}; border:3px solid ${ringColor};">
-              <span class="font-black text-base sm:text-2xl select-none">${escapeHtml(num)}</span>
+            <div class="relative ${nodeSize} rounded-full overflow-hidden flex items-center justify-center shadow-lg"
+                 style="background:${kp}; color:${kt}; border:2.5px solid ${ringColor};">
+              <span class="font-black text-xs sm:text-base select-none">${escapeHtml(num)}</span>
               ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name_ko)}" class="absolute inset-0 w-full h-full object-cover object-top" onerror="this.style.display='none'" />` : ''}
             </div>
           </div>
-          <!-- Player Name & Caps Plate -->
-          <div class="mt-1 px-2 sm:px-2.5 py-0.5 rounded-lg bg-slate-950/95 border-2 ${lowSuit ? 'border-rose-500' : isFocused ? 'border-amber-400' : 'border-slate-700'} text-center shadow-2xl backdrop-blur-sm">
-            <div class="font-black text-white truncate ${nameMaxW} leading-tight" title="${escapeHtml(formatNameKoEn(p))}">${escapeHtml(formatNameKoEn(p))}</div>
-            ${!compact ? `<div class="text-[10px] sm:text-xs text-amber-300 font-bold leading-tight whitespace-nowrap">${escapeHtml(p.official_caps)}경기 · ${escapeHtml((p.active_period_label || '').slice(0, 9))}</div>` : ''}
-            ${lowSuit ? `<div class="text-[9px] font-bold text-rose-400 leading-tight">⚠ 포지션 적합도 낮음</div>` : ''}
+          <!-- Player Name & Caps Plate: Safe line-height & padding prevents text clipping -->
+          <div class="mt-0.5 px-1.5 py-0.5 rounded-md bg-slate-950/95 border ${lowSuit ? 'border-rose-500' : isFocused ? 'border-amber-400' : 'border-slate-700/80'} text-center shadow-md text-[10px] sm:text-xs" style="line-height: 1.35;">
+            <div class="font-black text-white truncate ${nameMaxW}" style="line-height: 1.35; padding: 1px 0;" title="${escapeHtml(fullName)}">${escapeHtml(displayName)}</div>
+            ${!compact ? `<div class="text-[9px] text-amber-300 font-bold leading-tight whitespace-nowrap" style="padding-bottom: 1px;">${escapeHtml(p.official_caps)}경기</div>` : ''}
+            ${lowSuit ? `<div class="text-[8px] font-bold text-rose-400 leading-tight">⚠ 적합도 낮음</div>` : ''}
           </div>
         </div>
       `;
@@ -4024,29 +4028,49 @@ const DEFAULT_FORMATIONS = [
     showKakaoLinkShareModal(teamTitle, shareUrl, slug);
   }
 
-  async function exportCurrentLineupPng(layout = 'portrait', scale = 1) {
+      async function exportCurrentLineupPng(layout = 'portrait', scale = 2) {
+    showToast('고해상도 공식 베스트11 포스터 이미지를 준비 중입니다...', 'info');
+
+    // 1. Obtain verified share slug by auto-saving if needed
+    const slug = await ensureLineupSaved();
+    if (slug) {
+      try {
+        const downloadUrl = `/api/lineups/${slug}/png?layout=${layout}&scale=${scale}&download=1`;
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `ALL-TIME-XI-${state.builderCountryCode || 'TEAM'}-${layout}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast('✅ 고해상도 공식 베스트11 포스터 이미지가 저장되었습니다!', 'success');
+        return;
+      } catch (e) {
+        console.warn('Server PNG download error:', e);
+      }
+    }
+
+    // 2. Client-side fallback if server fails
     const pitchEl = document.getElementById('tactical-pitch-board');
     if (window.html2canvas && pitchEl) {
-      showToast('화면에 보이는 전술판을 2배 고화질(WYSIWYG)로 캡처하는 중입니다...', 'info');
       try {
         const canvas = await window.html2canvas(pitchEl, {
-          scale: 2.5,
+          scale: 2.0,
           useCORS: true,
-          allowTaint: true,
+          allowTaint: false,
           backgroundColor: '#070b14',
           logging: false
         });
         const dataUrl = canvas.toDataURL('image/png');
         const a = document.createElement('a');
         a.href = dataUrl;
-        a.download = `ALL-TIME-XI-${state.builderCountryCode || 'TEAM'}-${state.builderFormationCode || 'XI'}.png`;
+        a.download = `ALL-TIME-XI-${state.builderCountryCode || 'TEAM'}-pitch.png`;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        showToast('화면 그대로 고화질 PNG 이미지가 저장되었습니다!', 'success');
+        showToast('전술판 이미지가 저장되었습니다!', 'success');
         return;
       } catch (err) {
-        console.warn('html2canvas screenshot fallback:', err);
+        console.warn('Client fallback capture error:', err);
       }
     }
 
