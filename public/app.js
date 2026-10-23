@@ -1368,7 +1368,7 @@ const DEFAULT_FORMATIONS = [
 
       // Perfectly proportioned node sizing to prevent any overlap
       const nodeSize = compact ? 'w-9 h-9 sm:w-10 sm:h-10' : 'w-11 h-11 sm:w-13 sm:h-13';
-      const nameMaxW = compact ? 'max-w-[70px]' : 'max-w-[84px] sm:max-w-[104px]';
+      const nameMaxW = compact ? 'max-w-[74px]' : 'max-w-[88px] sm:max-w-[110px]';
 
       if (!p) {
         return `
@@ -1408,9 +1408,9 @@ const DEFAULT_FORMATIONS = [
             </div>
           </div>
           <!-- Player Name & Caps Plate: Safe line-height & padding prevents text clipping -->
-          <div class="mt-0.5 px-1.5 py-0.5 rounded-md bg-slate-950/95 border ${lowSuit ? 'border-rose-500' : isFocused ? 'border-amber-400' : 'border-slate-700/80'} text-center shadow-md text-[10px] sm:text-xs" style="line-height: 1.35;">
-            <div class="font-black text-white truncate ${nameMaxW}" style="line-height: 1.35; padding: 1px 0;" title="${escapeHtml(fullName)}">${escapeHtml(displayName)}</div>
-            ${!compact ? `<div class="text-[9px] text-amber-300 font-bold leading-tight whitespace-nowrap" style="padding-bottom: 1px;">${escapeHtml(p.official_caps)}경기</div>` : ''}
+          <div class="mt-0.5 px-1.5 py-0.5 rounded-md bg-slate-950/95 border ${lowSuit ? 'border-rose-500' : isFocused ? 'border-amber-400' : 'border-slate-700/80'} text-center shadow-md" style="line-height: 1.35;">
+            <div class="font-black text-white truncate ${nameMaxW} text-[11px] sm:text-[12.5px] tracking-tight" style="line-height: 1.35; padding: 1px 0;" title="${escapeHtml(fullName)}">${escapeHtml(displayName)}</div>
+            ${!compact ? `<div class="text-[9px] sm:text-[9.5px] text-amber-300 font-bold leading-tight whitespace-nowrap" style="padding-bottom: 1px;">${escapeHtml(p.official_caps)}경기</div>` : ''}
             ${lowSuit ? `<div class="text-[8px] font-bold text-rose-400 leading-tight">⚠ 적합도 낮음</div>` : ''}
           </div>
         </div>

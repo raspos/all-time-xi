@@ -197,8 +197,8 @@ def draw_player_node(
     kit_secondary: Tuple[int, int, int],
     kit_text: Tuple[int, int, int]
 ):
-    font_name = load_korean_font(max(14, int(radius * 0.44)), bold=True)
-    font_sub = load_korean_font(max(11, int(radius * 0.34)), bold=False)
+    font_name = load_korean_font(max(15, int(radius * 0.48)), bold=True)
+    font_sub = load_korean_font(max(11, int(radius * 0.35)), bold=False)
     font_num = load_korean_font(max(16, int(radius * 0.62)), bold=True)
     font_pos = load_korean_font(max(10, int(radius * 0.36)), bold=True)
 
@@ -245,13 +245,10 @@ def draw_player_node(
         draw.ellipse([cx0, cy0, cx0 + c_r, cy0 + c_r], fill=(250, 204, 21), outline=(15, 23, 42), width=2)
         draw.text((cx0 + (c_r - cw) // 2, cy0 + 2), "C", fill=(15, 23, 42), font=font_pos)
 
-    # Name plate below circle: Matches web app formatting exactly: "호마리우 (Romário)"
+    # Name plate below circle: Clean Korean display name (matching web app)
     ko = (player.get("name_ko") or "").strip()
     en = (player.get("name_en") or "").strip()
-    if ko and en and ko.lower() != en.lower():
-        name_str = f"{ko} ({en})"
-    else:
-        name_str = ko or en or "선수"
+    name_str = ko or en or "선수"
     name_str = sanitize_display_text(name_str, font_name)
 
     if len(name_str) > 17:
