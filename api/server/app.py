@@ -1668,24 +1668,191 @@ def admin_list_audit_logs(limit: int = 50):
 # ==============================================================================
 # 8. SHAREABLE URL ROUTES WITH OPENGRAPH SOCIAL META TAGS (/team/{slug}, /match/{slug})
 # ==============================================================================
+EMBEDDED_INDEX_HTML = """<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>ALL-TIME XI — 역대 최강의 국가대표를 만들어라</title>
+    <!-- __DYNAMIC_OG_REPLACE__ -->
+  <!-- Open Graph / KakaoTalk Preview Meta Tags -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ALL-TIME XI" />
+  <meta property="og:title" content="ALL-TIME XI — 역대 최강의 국가대표를 만들어라" />
+  <meta property="og:description" content="차범근·손흥민 | 펠레·호나우두 | 메시·마라도나! 시대와 세대를 초월한 30개국 올타임 베스트11 전술판 및 AI 가상 매치업" />
+  <meta property="og:image" content="https://all-time-xi.vercel.app/og-image.png" />
+  <meta property="og:image:secure_url" content="https://all-time-xi.vercel.app/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ALL-TIME XI 역대 국가대표 드림팀 전술 시뮬레이터" />
+  <meta property="og:url" content="https://all-time-xi.vercel.app/" />
+
+  <!-- Twitter Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ALL-TIME XI — 역대 최강의 국가대표를 만들어라" />
+  <meta name="twitter:description" content="차범근·손흥민 | 펠레·호나우두 | 메시·마라도나! 30개국 올타임 베스트11 전술판 및 AI 가상 매치업" />
+  <meta name="twitter:image" content="https://all-time-xi.vercel.app/og-image.png" />
+  <!-- __OG_META_INJECT__ -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            pitch: {
+              dark: '#0f522d',
+              light: '#136236',
+              line: 'rgba(255,255,255,0.82)'
+            },
+            brand: {
+              gold: '#facc15',
+              emerald: '#10b981',
+              slate: '#0b1120'
+            }
+          },
+          fontFamily: {
+            sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', '"Malgun Gothic"', '"맑은 고딕"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #070b14;
+      color: #f1f5f9;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif;
+      overflow-x: hidden;
+    }
+    .pitch-node {
+      transition: left 0.45s cubic-bezier(0.22, 1, 0.36, 1), top 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.18s ease;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .pitch-node:hover {
+      transform: translate(-50%, -50%) scale(1.07);
+      z-index: 30;
+    }
+    .pitch-node.dragging {
+      opacity: 0.75;
+      transform: translate(-50%, -50%) scale(1.14);
+      z-index: 40;
+    }
+    .pitch-node.selected-swap {
+      box-shadow: 0 0 0 4px #38bdf8, 0 0 20px rgba(56, 189, 248, 0.8);
+      z-index: 35;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-400 selection:text-slate-950">
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="window.app.navigate('home')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-yellow-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-amber-500/20 font-black text-slate-950 text-lg tracking-tighter">
+          XI
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-black text-lg sm:text-xl tracking-tight text-white">ALL-TIME <span class="text-amber-400">XI</span></span>
+            <span class="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">A매치 30+ 공식기록 DB</span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden md:block">역대 최강의 국가대표 드림팀 전술판 제작 · 공유</p>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-1 sm:gap-2 overflow-x-auto py-1">
+        <button id="nav-home" onclick="window.app.navigate('home')" class="nav-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap transition-colors">
+          🌍 국가 선택 · 홈
+        </button>
+        <button id="nav-builder" onclick="window.app.navigate('builder')" class="nav-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap transition-colors">
+          ⚽ 베스트11 전술판
+        </button>
+        <button id="nav-database" onclick="window.app.navigate('database')" class="nav-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap transition-colors">
+          📚 역대 선수 DB
+        </button>
+        <button id="nav-quality" onclick="window.app.navigate('quality')" class="nav-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap transition-colors">
+          🛡️ 데이터 품질·출처
+        </button>
+      </nav>
+
+      <div class="hidden lg:flex items-center gap-2">
+        <span class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>30개국 레전드 DB 가동 중</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main id="app-root" class="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-6 py-5">
+    <!-- Dynamic Views Rendered by public/app.js -->
+    <div class="py-20 text-center text-slate-400">데이터베이스 및 전술 엔진을 불러오는 중입니다...</div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-slate-950/90 mt-12 py-6 px-4 sm:px-6 text-xs text-slate-400">
+    <div class="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="space-y-2">
+        <div class="font-bold text-slate-200">ALL-TIME XI — 역대 국가대표 드림팀 전술 시뮬레이터</div>
+        <div>데이터 기준: FIFA 세계랭킹 상위 30개국 + 대한민국 (기준일 2026-10-07) | 성인 남자 A대표팀 공식 경기 30회 이상 출전 선수 3,864명 수록</div>
+        <div class="text-[11px] text-slate-500">출처: RSSSF Countrywise International Records (1900s–2020s), KFA Century Club, Wikipedia FA Records, dcaribou/transfermarkt-datasets (CC0), Wikidata & Wikimedia Commons</div>
+        
+        <!-- Visitor Counter -->
+        <div class="flex flex-wrap items-center gap-2.5 pt-1 text-xs">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 shadow-inner">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>오늘 방문자: <strong id="visitor-today-count" class="text-emerald-400 font-bold font-mono">...</strong>명</span>
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 shadow-inner">
+            <span>👀 총 누적 방문자: <strong id="visitor-total-count" class="text-sky-400 font-bold font-mono">...</strong>명</span>
+          </div>
+        </div>
+
+        <!-- Copyright & Ad Notice -->
+        <div class="pt-1 text-[11px] text-slate-400 font-medium">
+          © 2026 <a href="https://raspos.github.io/databrew/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2">databrew</a> · 이 사이트에는 추후 광고가 게재될 수 있습니다.
+        </div>
+      </div>
+      <div class="flex items-center gap-3 self-end sm:self-center">
+        <button onclick="window.app.navigate('admin')" class="px-2.5 py-1.5 rounded bg-slate-900/60 hover:bg-slate-800 text-slate-500 hover:text-slate-300 border border-slate-800/60" title="데이터 관리 콘솔">
+          ⚙️ 관리자 콘솔
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Global Modals Container -->
+  <div id="modal-root"></div>
+  <!-- Toast Container -->
+  <div id="toast-root" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <script src="/static/html2canvas.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
+"""
+
 def render_spa_with_og_tags(title: str, description: str, image_url: str, initial_route_js: str = "") -> HTMLResponse:
-    candidates = [
-        ROOT_DIR / "public" / "index.html",
-        ROOT_DIR / "api" / "public" / "index.html",
-        Path(__file__).resolve().parent / "public" / "index.html",
-        Path("/var/task/public/index.html"),
-        Path("/var/task/api/public/index.html"),
-        Path("public/index.html"),
-        Path("api/public/index.html"),
-        Path(__file__).resolve().parent / "templates" / "index.html",
-        ROOT_DIR / "server" / "templates" / "index.html",
-    ]
-    index_html_path = next((p for p in candidates if p.exists()), None)
-    if index_html_path and index_html_path.exists():
-        with open(index_html_path, encoding="utf-8") as f:
-            html = f.read()
-    else:
-        html = "<html><body><h1>ALL-TIME XI</h1></body></html>"
+    html = EMBEDDED_INDEX_HTML
+
     
     # Ensure absolute image URL for KakaoTalk & OpenGraph scrapers
     abs_image_url = image_url
