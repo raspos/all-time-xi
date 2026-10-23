@@ -2,11 +2,7 @@
   "regions": ["icn1"],
   "functions": {
     "api/**/*.py": {
-      "includeFiles": [
-        "data/**",
-        "public/**",
-        "api/public/**"
-      ]
+      "includeFiles": "data/**"
     }
   },
   "rewrites": [
