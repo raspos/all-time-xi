@@ -2086,7 +2086,7 @@ const DEFAULT_FORMATIONS = [
             </div>
             <h3 class="text-xl sm:text-2xl font-black text-white mt-1">저장된 역대 베스트 11 갤러리</h3>
             <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-              사용자가 저장한 베스트11 및 국가별 공식 올타임 드림팀 목록입니다. 언제든지 클릭하여 전술판으로 다시 불러오거나, 고해상도 PNG를 다운로드하고 AI 가상 대결에 출전시킬 수 있습니다.
+              사용자가 저장한 베스트11 및 국가별 공식 올타임 드림팀 목록입니다. 언제든지 클릭하여 전술판으로 다시 불러오거나, 고해상도 PNG를 다운로드하고 카카오톡으로 바로 공유할 수 있습니다.
             </p>
           </div>
           <button onclick="window.app.saveCurrentLineup(false)"
@@ -2095,61 +2095,99 @@ const DEFAULT_FORMATIONS = [
           </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           ${state.savedLineups.map((l) => {
             const snap = l.snapshot || {};
             const flag = snap.flag_emoji || (state.countries.find(c => c.fifa_code === l.country_fifa_code) || {}).flag_emoji || '⚽';
-            const pList = (snap.players || []).map(p => formatNameKoEn(p) || p.name_ko).filter(Boolean);
+            const players = snap.players || [];
             const shareUrl = `${window.location.origin}/team/${l.share_slug}`;
+            const teamTitle = l.team_name || snap.team_name || '올타임 베스트 11';
+            const desc = l.team_description || snap.team_description || '';
+            const cName = l.country_name_ko || snap.country_name_ko || l.country_fifa_code;
+            const fCode = l.formation_code || snap.formation_code || '4-3-3';
+            const style = l.tactical_style || snap.tactical_style || '균형형';
+
             return `
-              <div class="rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-amber-400/60 p-4 flex flex-col justify-between gap-3 transition shadow-lg group">
-                <div class="space-y-2">
-                  <div class="flex items-start justify-between gap-2">
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class="text-2xl shrink-0">${escapeHtml(flag)}</span>
+              <div class="rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-400/70 p-5 flex flex-col justify-between gap-4 transition-all duration-200 shadow-xl group hover:-translate-y-0.5">
+                <div class="space-y-3.5">
+                  <!-- Header: Flag, Team Name & Badges -->
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <span class="text-3xl shrink-0 p-1.5 rounded-xl bg-slate-900 border border-slate-800 shadow">${escapeHtml(flag)}</span>
                       <div class="min-w-0">
-                        <div class="font-black text-white text-sm sm:text-base truncate group-hover:text-amber-300 transition">
-                          ${escapeHtml(l.team_name || snap.team_name || '베스트11')}
-                        </div>
-                        <div class="text-[11px] text-slate-400">
-                          ${escapeHtml(l.country_name_ko || snap.country_name_ko || l.country_fifa_code)} · 포메이션 ${escapeHtml(l.formation_code || snap.formation_code || '4-3-3')}
+                        <h4 class="font-black text-white text-base sm:text-lg leading-tight truncate group-hover:text-amber-300 transition" title="${escapeHtml(teamTitle)}">
+                          ${escapeHtml(teamTitle)}
+                        </h4>
+                        <div class="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-1.5 flex-wrap">
+                          <span>${escapeHtml(cName)}</span>
+                          <span class="text-slate-600">·</span>
+                          <span class="px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-[11px] font-bold text-amber-300">포메이션 ${escapeHtml(fCode)}</span>
                         </div>
                       </div>
                     </div>
-                    <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-bold text-amber-300 shrink-0">
-                      ${escapeHtml(l.tactical_style || snap.tactical_style || '균형형')}
+                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-bold text-emerald-300 shrink-0">
+                      ${escapeHtml(style)}
                     </span>
                   </div>
 
-                  ${l.team_description || snap.team_description ? `
-                    <p class="text-xs text-slate-300 line-clamp-2 leading-relaxed bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
-                      ${escapeHtml(l.team_description || snap.team_description)}
-                    </p>
+                  <!-- Team description if present -->
+                  ${desc ? `
+                    <div class="text-xs text-slate-300 leading-relaxed bg-slate-900/80 p-3 rounded-xl border border-slate-800/90 shadow-inner">
+                      ${escapeHtml(desc)}
+                    </div>
                   ` : ''}
 
-                  <!-- 11 Players summary chips -->
-                  <div class="pt-1">
-                    <div class="text-[10px] font-bold text-slate-500 mb-1">선발 11명 명단:</div>
-                    <div class="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
-                      ${pList.length ? escapeHtml(pList.join(' · ')) : '11명 선수 등록됨'}
+                  <!-- 11 Players Badge Grid (Clean, readable, never squished) -->
+                  <div>
+                    <div class="text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-between">
+                      <span>선발 11명 명단</span>
+                      <span class="text-[10px] text-slate-500 font-semibold">${players.length}명 등록됨</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto custom-scrollbar p-1 rounded-lg bg-slate-900/40 border border-slate-800/60">
+                      ${players.length ? players.map(p => {
+                        const pName = p.name_ko || p.name_en || '선수';
+                        const pPos = p.slot_code || p.primary_position || 'XI';
+                        const isC = p.is_captain;
+                        return `
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-900 border ${isC ? 'border-amber-400 text-amber-300 font-bold' : 'border-slate-800 text-slate-200'} text-[11px] shadow-sm">
+                            <span class="text-[9px] font-black text-sky-400">${escapeHtml(pPos)}</span>
+                            <span>${escapeHtml(pName)}</span>
+                            ${isC ? `<span class="text-[9px] px-1 rounded-full bg-amber-400 text-slate-950 font-black">C</span>` : ''}
+                          </span>
+                        `;
+                      }).join('') : `
+                        <span class="text-xs text-slate-500 px-1 py-0.5">선수 데이터 로딩 중</span>
+                      `}
                     </div>
                   </div>
                 </div>
 
-                <!-- Action button row -->
-                <div class="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-1.5 text-xs">
-                  <div class="flex items-center gap-1.5 flex-wrap">
+                <!-- Action button row with direct Kakao share -->
+                <div class="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-2 flex-wrap">
+                  <div class="flex items-center gap-2">
                     <button onclick="window.app.loadSavedLineupIntoBuilder('${escapeHtml(l.share_slug)}')"
-                            class="px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition">
-                      📂 불러오기
+                            class="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition shadow flex items-center gap-1">
+                      <span>📂</span>
+                      <span>전술판 불러오기</span>
                     </button>
                     <a href="/api/lineups/${escapeHtml(l.share_slug)}/png?layout=portrait" download
-                       class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition">
-                      🖼️ PNG
+                       class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1"
+                       title="고해상도 세로형 PNG 다운로드">
+                      <span>🖼️</span>
+                      <span>PNG</span>
                     </a>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <button onclick="window.app.shareNativeOrKakao('${escapeHtml(teamTitle)}', '${escapeHtml(shareUrl)}')"
+                            class="px-2.5 py-1.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs font-black transition flex items-center gap-1 shadow"
+                            title="카카오톡으로 바로 공유">
+                      <span>💬</span>
+                      <span>카톡</span>
+                    </button>
                     <button onclick="window.app.copyShareUrl('${escapeHtml(shareUrl)}')"
-                            class="px-2 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-bold transition" title="공유 링크 복사">
-                      🔗 링크
+                            class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-bold transition"
+                            title="공유 링크 복사">
+                      <span>🔗</span>
                     </button>
                   </div>
                 </div>
