@@ -1852,7 +1852,7 @@ EMBEDDED_INDEX_HTML = """<!DOCTYPE html>
   <div id="toast-root" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
 
   <script src="/static/html2canvas.min.js"></script>
-  <script src="/app.js?v=20261023_v11"></script>
+  <script src="/app.js?v=20261023_v12"></script>
 </body>
 </html>
 """

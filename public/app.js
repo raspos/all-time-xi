@@ -1768,12 +1768,6 @@ const DEFAULT_FORMATIONS = [
                     class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800 text-xs font-bold transition">
               초기화
             </button>
-            <button onclick="window.app.openLineupImagePreview()"
-                    class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/25 transition flex items-center gap-1.5"
-                    title="전술판 사진/이미지를 카카오톡으로 바로 전송합니다 (모바일: 카톡 사진 전송, PC: 클립보드 복사 후 Ctrl+V)">
-              <span class="text-sm">💬</span>
-              <span>카톡 이미지 바로 공유</span>
-            </button>
             <button onclick="window.app.shareLineupDirectly()"
                     class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-bold transition flex items-center gap-1.5"
                     title="전술판 접속 링크를 카카오톡 또는 SNS로 공유합니다">
