@@ -14,22 +14,34 @@ import sqlite3
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
+import sys
+import shutil
+from pathlib import Path
+
+CUR_DIR = Path(__file__).resolve().parent
+ROOT_DIR = CUR_DIR.parent
+for p in [str(CUR_DIR), str(ROOT_DIR), str(ROOT_DIR / "server"), str(ROOT_DIR / "api" / "server"), "/var/task", "/var/task/api"]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 from fastapi import FastAPI, HTTPException, Request, Query, UploadFile, File
 from fastapi.responses import HTMLResponse, Response, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from server.ai_service import (
-    get_ai_status, set_runtime_api_key, check_rate_limit,
-    compute_comparison_cache_key, run_ai_match_comparison
-)
-from server.image_export import render_lineup_png, render_ai_comparison_png
-
-import shutil
-from pathlib import Path
-from fastapi.middleware.cors import CORSMiddleware
-
-ROOT_DIR = Path(__file__).resolve().parent.parent
+try:
+    from server.ai_service import (
+        get_ai_status, set_runtime_api_key, check_rate_limit,
+        compute_comparison_cache_key, run_ai_match_comparison
+    )
+    from server.image_export import render_lineup_png, render_ai_comparison_png
+except ImportError:
+    from api.server.ai_service import (
+        get_ai_status, set_runtime_api_key, check_rate_limit,
+        compute_comparison_cache_key, run_ai_match_comparison
+    )
+    from api.server.image_export import render_lineup_png, render_ai_comparison_png
 
 app = FastAPI(
     title="ALL-TIME XI API",
