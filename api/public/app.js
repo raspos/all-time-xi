@@ -2163,30 +2163,35 @@ const DEFAULT_FORMATIONS = [
                     </div>
                   ` : ''}
 
-                  <!-- 11 Players Structured Grid: 4 columns on desktop, 3 columns on tablet, 2 columns on mobile -->
+                  <!-- 11 Players Structured Grid: 2 generous columns on desktop & tablet, never squished -->
                   <div>
-                    <div class="text-xs font-bold text-slate-400 mb-2 flex items-center justify-between">
+                    <div class="text-xs font-bold text-slate-300 mb-2.5 flex items-center justify-between">
                       <span class="flex items-center gap-1.5">
-                        <span>👥 선발 11명 스쿼드</span>
+                        <span class="text-base">👥</span>
+                        <span class="font-extrabold text-slate-200">선발 11명 명단</span>
                       </span>
-                      <span class="text-[11px] text-slate-500 font-semibold">${players.length}명 완비</span>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-bold">${players.length}명 완비</span>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 p-2 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
                       ${players.length ? players.map(p => {
                         const pName = p.name_ko || p.name_en || '선수';
-                        const sName = getDisplayShortName(pName);
                         const pPos = p.slot_code || p.primary_position || 'XI';
                         const isC = p.is_captain;
-                        const posColor = getPositionColor(pPos);
+                        const badgeColor = pPos.startsWith('GK') ? 'bg-amber-400/15 text-amber-300 border-amber-400/40' :
+                                           (pPos.includes('B') || pPos.includes('DF')) ? 'bg-sky-400/15 text-sky-300 border-sky-400/40' :
+                                           pPos.includes('M') ? 'bg-emerald-400/15 text-emerald-300 border-emerald-400/40' :
+                                           'bg-rose-400/15 text-rose-300 border-rose-400/40';
                         return `
-                          <div class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-950 border ${isC ? 'border-amber-400/80 bg-amber-950/20' : 'border-slate-800/80'} shadow-sm min-w-0" title="${escapeHtml(pName)} (${escapeHtml(pPos)})">
-                            <span class="text-[10px] font-black px-1 py-0.5 rounded ${posColor} bg-slate-900 shrink-0 leading-none">${escapeHtml(pPos)}</span>
-                            <span class="text-xs font-semibold text-slate-200 truncate flex-1 leading-none">${escapeHtml(sName)}</span>
-                            ${isC ? `<span class="text-[9px] px-1 rounded-full bg-amber-400 text-slate-950 font-black shrink-0 leading-none">C</span>` : ''}
+                          <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-950 border ${isC ? 'border-amber-400/80 bg-amber-950/20 shadow-sm' : 'border-slate-800/90'} transition hover:border-slate-700">
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                              <span class="text-[11px] font-black px-1.5 py-0.5 rounded border ${badgeColor} font-mono shrink-0">${escapeHtml(pPos)}</span>
+                              <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(pName)}</span>
+                            </div>
+                            ${isC ? `<span class="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black shrink-0 tracking-wider">주장</span>` : ''}
                           </div>
                         `;
                       }).join('') : `
-                        <div class="col-span-full text-xs text-slate-500 p-2 text-center">선수 데이터 로딩 중</div>
+                        <div class="col-span-full text-xs text-slate-500 p-3 text-center">선수 명단이 없습니다.</div>
                       `}
                     </div>
                   </div>
