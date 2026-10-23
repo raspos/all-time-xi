@@ -2138,30 +2138,7 @@ const DEFAULT_FORMATIONS = [
               `;
             }).join('')}
           </div>
-      </div>
-
-      <!-- Section: 베스트11 갤러리 이동 안내 배너 -->
-      <div class="mt-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 p-5 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-2xl">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-2xl shrink-0">
-            📋
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h4 class="font-black text-white text-base sm:text-lg">저장된 역대 베스트 11 갤러리</h4>
-              <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold font-mono">총 ${state.savedLineups.length}개 팀</span>
-            </div>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
-              사용자가 저장한 국가별 올타임 드림팀을 전용 갤러리 탭에서 넓고 쾌적하게 확인하세요.<br class="hidden sm:inline" />
-              언제든지 클릭 한 번으로 전술판으로 다시 불러오거나 카카오톡으로 공유할 수 있습니다.
-            </p>
-          </div>
         </div>
-        <button onclick="window.app.navigate('board')"
-                class="px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-400/25 transition whitespace-nowrap self-start sm:self-auto flex items-center gap-2">
-          <span>📋</span>
-          <span>베스트11 갤러리 보러가기 →</span>
-        </button>
       </div>
     `;
   }
