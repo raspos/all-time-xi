@@ -13,8 +13,34 @@ try:
 except Exception:
     pass
 
+import unicodedata
+
+def sanitize_display_text(text: str, font: ImageFont.FreeTypeFont) -> str:
+    """
+    Ensures every character in text renders visibly without missing blanks:
+    If a character with diacritics/accents (e.g. 'á', 'é', 'ñ', 'ç') has 0 height or missing glyph
+    in the active font, automatically normalizes it to base Latin ('a', 'e', 'n', 'c')
+    so that letters are NEVER skipped or rendered as blank spaces.
+    """
+    if not text:
+        return ""
+    out = []
+    for ch in text:
+        bbox = font.getbbox(ch)
+        if bbox and (bbox[3] - bbox[1]) > 0:
+            out.append(ch)
+        else:
+            nfkd = unicodedata.normalize('NFKD', ch)
+            base_ch = ''.join(c for c in nfkd if unicodedata.category(c) != 'Mn')
+            out.append(base_ch if base_ch else ch)
+    return ''.join(out)
+
 def load_korean_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    font_filename = "NanumGothic-Bold.ttf" if bold else "NanumGothic-Regular.ttf"
+    font_candidates = (
+        ["Pretendard-Bold.otf", "NanumGothic-Bold.ttf"]
+        if bold else
+        ["Pretendard-Regular.otf", "NanumGothic-Regular.ttf"]
+    )
 
     search_dirs = [
         # Relative to server directory
@@ -29,13 +55,14 @@ def load_korean_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
         "/tmp/fonts",
     ]
 
-    for d in search_dirs:
-        p = os.path.join(d, font_filename)
-        if os.path.isfile(p):
-            try:
-                return ImageFont.truetype(p, size=size)
-            except Exception:
-                pass
+    for font_filename in font_candidates:
+        for d in search_dirs:
+            p = os.path.join(d, font_filename)
+            if os.path.isfile(p):
+                try:
+                    return ImageFont.truetype(p, size=size)
+                except Exception:
+                    pass
 
     # Windows fallback
     win_font = r"C:\Windows\Fonts\malgunbd.ttf" if bold else r"C:\Windows\Fonts\malgun.ttf"
@@ -225,6 +252,7 @@ def draw_player_node(
         name_str = f"{ko} ({en})"
     else:
         name_str = ko or en or "선수"
+    name_str = sanitize_display_text(name_str, font_name)
 
     if len(name_str) > 17:
         name_str = name_str[:16] + "…"
@@ -360,6 +388,7 @@ def render_lineup_png(lineup_data: Dict[str, Any], layout: str = "portrait", sca
                 draw.rounded_rectangle([sx0 + 12 * scale, ry, sx1 - 12 * scale, ry + row_h - 2], radius=6 * scale, fill=(30, 41, 59, 180))
             slot_lbl = str(p.get("slot_code", ""))
             p_name = f"{p.get('name_ko', '')} ({p.get('name_en', '')})"
+            p_name = sanitize_display_text(p_name, font_list)
             if len(p_name) > 22:
                 p_name = p_name[:21] + "…"
             c_mark = " [C]" if p.get("is_captain") else ""
