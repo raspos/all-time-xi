@@ -282,6 +282,37 @@ def get_bootstrap_data(response: Response):
     }
 
 def update_and_get_visitor_stats(conn: sqlite3.Connection) -> Dict[str, Any]:
+    import urllib.request
+    import re
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    total_val = None
+    today_val = None
+
+    # 1. Fetch real external persistent visitor counts
+    try:
+        req_total = urllib.request.Request(
+            "https://api.visitorbadge.io/api/visitors?path=all-time-xi.vercel.app.total",
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req_total, timeout=2.5) as resp:
+            svg = resp.read().decode("utf-8", errors="replace")
+            m = re.findall(r'>(\d+)<', svg)
+            if m:
+                total_val = int(m[-1])
+
+        req_today = urllib.request.Request(
+            f"https://api.visitorbadge.io/api/visitors?path=all-time-xi.vercel.app.{today_str}",
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req_today, timeout=2.5) as resp:
+            svg = resp.read().decode("utf-8", errors="replace")
+            m = re.findall(r'>(\d+)<', svg)
+            if m:
+                today_val = int(m[-1])
+    except Exception:
+        pass
+
+    # 2. SQLite local sync / fallback
     try:
         cur = conn.cursor()
         cur.execute("""
@@ -292,52 +323,38 @@ def update_and_get_visitor_stats(conn: sqlite3.Connection) -> Dict[str, Any]:
                 updated_at TEXT
             )
         """)
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        
-        # 1. Total visits
-        cur.execute("SELECT count_val FROM site_visitor_stats WHERE stat_key = 'total_visits'")
-        row = cur.fetchone()
-        if not row:
-            total_visits = 1894
-            cur.execute(
-                "INSERT INTO site_visitor_stats (stat_key, count_val, updated_at) VALUES ('total_visits', ?, ?)",
-                (total_visits, datetime.now().isoformat())
-            )
-        else:
-            total_visits = int(row[0]) + 1
-            cur.execute(
-                "UPDATE site_visitor_stats SET count_val = ?, updated_at = ? WHERE stat_key = 'total_visits'",
-                (total_visits, datetime.now().isoformat())
-            )
-            
-        # 2. Today visits
-        cur.execute("SELECT count_val, extra_text FROM site_visitor_stats WHERE stat_key = 'today_visits'")
-        row_today = cur.fetchone()
-        if not row_today or row_today[1] != today_str:
-            today_visits = 148
-            cur.execute(
-                "INSERT OR REPLACE INTO site_visitor_stats (stat_key, count_val, extra_text, updated_at) VALUES ('today_visits', ?, ?, ?)",
-                (today_visits, today_str, datetime.now().isoformat())
-            )
-        else:
-            today_visits = int(row_today[0]) + 1
-            cur.execute(
-                "UPDATE site_visitor_stats SET count_val = ?, updated_at = ? WHERE stat_key = 'today_visits'",
-                (today_visits, datetime.now().isoformat())
-            )
-            
+        if total_val is None:
+            cur.execute("SELECT count_val FROM site_visitor_stats WHERE stat_key = 'total_visits'")
+            row = cur.fetchone()
+            total_val = (row[0] + 1) if row else 1
+        cur.execute(
+            "INSERT OR REPLACE INTO site_visitor_stats (stat_key, count_val, updated_at) VALUES ('total_visits', ?, ?)",
+            (total_val, datetime.now().isoformat())
+        )
+
+        if today_val is None:
+            cur.execute("SELECT count_val, extra_text FROM site_visitor_stats WHERE stat_key = 'today_visits'")
+            row_today = cur.fetchone()
+            if not row_today or row_today[1] != today_str:
+                today_val = 1
+            else:
+                today_val = row_today[0] + 1
+        cur.execute(
+            "INSERT OR REPLACE INTO site_visitor_stats (stat_key, count_val, extra_text, updated_at) VALUES ('today_visits', ?, ?, ?)",
+            (today_val, today_str, datetime.now().isoformat())
+        )
         conn.commit()
-        return {
-            "total_visitors": total_visits,
-            "today_visitors": today_visits,
-            "date": today_str
-        }
     except Exception:
-        return {
-            "total_visitors": 1895,
-            "today_visitors": 149,
-            "date": datetime.now().strftime("%Y-%m-%d")
-        }
+        if total_val is None: total_val = 1
+        if today_val is None: today_val = 1
+    if total_val is not None and today_val is not None and total_val < today_val:
+        total_val = today_val
+
+    return {
+        "total_visitors": total_val,
+        "today_visitors": today_val,
+        "date": today_str
+    }
 
 @app.get("/api/stats/visit")
 @app.post("/api/stats/visit")

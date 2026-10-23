@@ -3242,24 +3242,21 @@ const DEFAULT_FORMATIONS = [
   // ============================================================================
   function updateVisitorCounterUI(stats) {
     try {
-      let today = (stats && stats.today_visitors) ? stats.today_visitors : 148;
-      let total = (stats && stats.total_visitors) ? stats.total_visitors : 1894;
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const localKey = 'all_time_xi_v_stats';
-      const saved = localStorage.getItem(localKey);
-      let localData = saved ? JSON.parse(saved) : null;
-      if (!localData || localData.date !== todayStr) {
-        localData = { date: todayStr, today: today, total: total };
-      } else {
-        today = Math.max(today, localData.today);
-        total = Math.max(total, localData.total);
+      try {
+        localStorage.removeItem('all_time_xi_v_stats');
+      } catch (e) {}
+
+      if (!stats) return;
+      let today = stats.today_visitors !== undefined ? Number(stats.today_visitors) : null;
+      let total = stats.total_visitors !== undefined ? Number(stats.total_visitors) : null;
+      if (today !== null && total !== null && total < today) {
+        total = today;
       }
-      localStorage.setItem(localKey, JSON.stringify({ date: todayStr, today: today, total: total }));
 
       const elToday = document.getElementById('visitor-today-count');
       const elTotal = document.getElementById('visitor-total-count');
-      if (elToday) elToday.textContent = Number(today).toLocaleString();
-      if (elTotal) elTotal.textContent = Number(total).toLocaleString();
+      if (elToday && today !== null) elToday.textContent = Number(today).toLocaleString();
+      if (elTotal && total !== null) elTotal.textContent = Number(total).toLocaleString();
     } catch (e) {
       console.warn('visitor counter ui error:', e);
     }

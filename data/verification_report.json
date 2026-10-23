@@ -355,11 +355,11 @@
     },
     "Test E (고유 URL 팀 저장 및 타 세션 열람)": {
       "passed": true,
-      "detail": "브라질(/team/bra-a9863ae8) 및 아르헨티나(/team/arg-622124f3) 저장 및 별도 세션 조회·복제 검증 완료"
+      "detail": "브라질(/team/bra-de3c98d2) 및 아르헨티나(/team/arg-5c1bd6ff) 저장 및 별도 세션 조회·복제 검증 완료"
     },
     "Test D (고해상도 PNG 이미지 저장 및 해상도 검증)": {
       "passed": true,
-      "detail": "세로형 1080×1350 (134,430 bytes) 및 가로형 1200×675 (127,887 bytes) PNG 생성 및 파일 무결성 확인 완료"
+      "detail": "세로형 1080×1350 (134,469 bytes) 및 가로형 1200×675 (127,925 bytes) PNG 생성 및 파일 무결성 확인 완료"
     },
     "Test C (브라질 vs 아르헨티나 AI 비교 파이프라인 검증)": {
       "passed": true,
