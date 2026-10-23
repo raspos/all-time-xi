@@ -374,3 +374,78 @@ def render_lineup_png(lineup_data: Dict[str, Any], layout: str = "portrait", sca
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
+
+
+def render_ai_comparison_png(team_a: Dict[str, Any], team_b: Dict[str, Any], analysis: Dict[str, Any]) -> bytes:
+    W, H = 1400, 920
+    img = Image.new("RGBA", (W, H), (10, 15, 29, 255))
+    draw = ImageDraw.Draw(img, "RGBA")
+
+    f_title = load_korean_font(30, bold=True)
+    f_score = load_korean_font(44, bold=True)
+    f_sub = load_korean_font(17, bold=True)
+    f_body = load_korean_font(15, bold=False)
+
+    # Top Header
+    draw.rectangle([0, 0, W, 95], fill=(15, 23, 42, 255))
+    draw.line([0, 95, W, 95], fill=(250, 204, 21), width=3)
+
+    out_sec = analysis.get("expected_outcome", {})
+    verdict = analysis.get("final_verdict", {})
+    score_str = f"{team_a.get('country_name_ko', 'TEAM A')}  {out_sec.get('team_a_goals', 0)}  :  {out_sec.get('team_b_goals', 0)}  {team_b.get('country_name_ko', 'TEAM B')}"
+    sbbox = draw.textbbox((0, 0), score_str, font=f_score)
+    draw.text(((W - (sbbox[2] - sbbox[0])) // 2, 14), score_str, fill=(250, 204, 21), font=f_score)
+
+    sub_hdr = f"{team_a.get('team_name')} ({team_a.get('formation_code')})   VS   {team_b.get('team_name')} ({team_b.get('formation_code')})"
+    shbbox = draw.textbbox((0, 0), sub_hdr, font=f_sub)
+    draw.text(((W - (shbbox[2] - shbbox[0])) // 2, 66), sub_hdr, fill=(226, 232, 240), font=f_sub)
+
+    # Left & Right Tactical Pitches
+    pitch_a = (35, 115, 635, 655)
+    pitch_b = (765, 115, 1365, 655)
+    draw_football_pitch(draw, pitch_a, theme=team_a.get("board_color_theme", "classic_emerald"))
+    draw_football_pitch(draw, pitch_b, theme=team_b.get("board_color_theme", "classic_emerald"))
+
+    # VS Emblem in center
+    draw.ellipse([660, 345, 740, 425], fill=(250, 204, 21), outline=(15, 23, 42), width=4)
+    vbbox = draw.textbbox((0, 0), "VS", font=f_title)
+    draw.text((700 - (vbbox[2] - vbbox[0]) // 2, 385 - (vbbox[3] - vbbox[1]) // 2 - 4), "VS", fill=(15, 23, 42), font=f_title)
+
+    for box, tdata in [(pitch_a, team_a), (pitch_b, team_b)]:
+        px0, py0, px1, py1 = box
+        pw, ph = px1 - px0, py1 - py0
+        kp = hex_to_rgb(tdata.get("kit_primary_color", "#FACC15"))
+        ks = hex_to_rgb(tdata.get("kit_secondary_color", "#15803D"))
+        kt = hex_to_rgb(tdata.get("kit_text_color", "#0F172A"))
+        for p in tdata.get("players", []):
+            cx = int(px0 + (float(p.get("x", p.get("custom_x", 50))) / 100.0) * pw)
+            cy = int(py0 + (float(p.get("y", p.get("custom_y", 50))) / 100.0) * ph)
+            draw_player_node(img, draw, cx, cy, 22, p, kp, ks, kt)
+
+    # Bottom AI Analysis Summary Panel
+    draw.rounded_rectangle([35, 675, 1365, 865], radius=12, fill=(15, 23, 42, 245), outline=(51, 65, 85), width=2)
+    winner_txt = f"AI 최종 판정 우세팀: {verdict.get('winner_team_ko', '백중세')}  |  {out_sec.get('win_tendency_ko', '')}"
+    draw.text((55, 692), winner_txt[:95], fill=(56, 189, 248), font=f_sub)
+
+    summary_txt = verdict.get("final_summary_ko", "")
+    line1 = summary_txt[:88]
+    line2 = summary_txt[88:176] + ("…" if len(summary_txt) > 176 else "")
+    draw.text((55, 725), line1, fill=(241, 245, 249), font=f_body)
+    if line2:
+        draw.text((55, 748), line2, fill=(241, 245, 249), font=f_body)
+
+    # Category Score Pills
+    cats = analysis.get("power_comparison", [])
+    cx_pill = 55
+    for c in cats[:6]:
+        lbl = f"{c.get('category_name_ko')}: {c.get('team_a_score')} vs {c.get('team_b_score')}"
+        draw.rounded_rectangle([cx_pill, 785, cx_pill + 200, 820], radius=8, fill=(30, 41, 59), outline=(71, 85, 105), width=1)
+        draw.text((cx_pill + 12, 793), lbl, fill=(250, 204, 21), font=f_body)
+        cx_pill += 212
+
+    disc = "※ 본 결과는 양 팀 선수의 전성기 기록과 전술 상성을 기반으로 생성한 AI 가상 시나리오입니다. | ALL-TIME XI"
+    draw.text((55, 835), disc, fill=(148, 163, 184), font=f_body)
+
+    out = io.BytesIO()
+    img.convert("RGB").save(out, format="PNG", optimize=True)
+    return out.getvalue()
