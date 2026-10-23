@@ -59,6 +59,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def vercel_middleware(request: Request, call_next):
+    # Restore original path from Vercel rewrite headers
+    current_path = request.scope.get("path", "/")
+    function_paths = ("/api/index", "/api/index.py", "/api/server/app", "/api/server/app.py")
+    if any(current_path.startswith(p) for p in function_paths) or current_path.rstrip("/") in (p.rstrip("/") for p in function_paths):
+        for hdr in ["x-forwarded-uri", "x-original-url", "x-invoke-path", "x-matched-path"]:
+            val = request.headers.get(hdr)
+            if val and val.startswith("/"):
+                candidate = val.split("?")[0]
+                if not any(candidate.startswith(p) for p in function_paths):
+                    request.scope["path"] = candidate
+                    if "raw_path" in request.scope:
+                        request.scope["raw_path"] = candidate.encode()
+                    break
+
+    try:
+        return await call_next(request)
+    except Exception:
+        import traceback
+        return Response(
+            f"BACKEND RUNTIME ERROR:\n{traceback.format_exc()}",
+            status_code=500,
+            media_type="text/plain"
+        )
+
 _RESOLVED_DB_PATH = None
 
 def resolve_database_path() -> str:

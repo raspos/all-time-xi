@@ -1,9 +1,22 @@
 {
   "regions": ["icn1"],
+  "functions": {
+    "api/server/app.py": {
+      "includeFiles": "{data/**,api/**}"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/api/index.py"
+      "source": "/api/(.*)",
+      "destination": "/api/server/app.py"
+    },
+    {
+      "source": "/team/(.*)",
+      "destination": "/api/server/app.py"
+    },
+    {
+      "source": "/match/(.*)",
+      "destination": "/api/server/app.py"
     }
   ]
 }
