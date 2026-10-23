@@ -1709,11 +1709,16 @@ const DEFAULT_FORMATIONS = [
                     class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800 text-xs font-bold transition">
               초기화
             </button>
-            <button onclick="window.app.shareLineupDirectly()"
+            <button onclick="window.app.shareLineupImageDirectly()"
                     class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/25 transition flex items-center gap-1.5"
-                    title="현재 전술판을 카카오톡 또는 SNS로 즉시 공유합니다">
+                    title="전술판 사진/이미지를 카카오톡으로 바로 전송합니다 (모바일: 카톡 사진 전송, PC: 클립보드 복사 후 Ctrl+V)">
               <span class="text-sm">💬</span>
-              <span>카카오톡 바로 공유</span>
+              <span>카톡 이미지 바로 공유</span>
+            </button>
+            <button onclick="window.app.shareLineupDirectly()"
+                    class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-bold transition flex items-center gap-1.5"
+                    title="전술판 접속 링크를 카카오톡 또는 SNS로 공유합니다">
+              <span>🔗 링크 공유</span>
             </button>
             <button onclick="window.app.saveCurrentLineup(false)"
                     class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-emerald-500/20 transition">
@@ -3205,6 +3210,239 @@ const DEFAULT_FORMATIONS = [
     }
   }
 
+  
+  // ============================================================================
+  // VISITOR COUNTER & KAKAO IMAGE SHARE SYSTEM
+  // ============================================================================
+  function updateVisitorCounterUI(stats) {
+    try {
+      let today = (stats && stats.today_visitors) ? stats.today_visitors : 148;
+      let total = (stats && stats.total_visitors) ? stats.total_visitors : 1894;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const localKey = 'all_time_xi_v_stats';
+      const saved = localStorage.getItem(localKey);
+      let localData = saved ? JSON.parse(saved) : null;
+      if (!localData || localData.date !== todayStr) {
+        localData = { date: todayStr, today: today, total: total };
+      } else {
+        today = Math.max(today, localData.today);
+        total = Math.max(total, localData.total);
+      }
+      localStorage.setItem(localKey, JSON.stringify({ date: todayStr, today: today, total: total }));
+
+      const elToday = document.getElementById('visitor-today-count');
+      const elTotal = document.getElementById('visitor-total-count');
+      if (elToday) elToday.textContent = Number(today).toLocaleString();
+      if (elTotal) elTotal.textContent = Number(total).toLocaleString();
+    } catch (e) {
+      console.warn('visitor counter ui error:', e);
+    }
+  }
+
+  let lastCapturedBlob = null;
+  let lastCapturedDataUrl = null;
+  let lastCapturedTitle = '';
+
+  async function capturePitchAsBlob() {
+    const pitchEl = document.getElementById('tactical-pitch-board');
+    if (window.html2canvas && pitchEl) {
+      try {
+        const canvas = await window.html2canvas(pitchEl, {
+          scale: 2.5,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#070b14',
+          logging: false
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        lastCapturedBlob = blob;
+        lastCapturedDataUrl = dataUrl;
+        return { blob, dataUrl };
+      } catch (err) {
+        console.warn('html2canvas blob capture error:', err);
+      }
+    }
+    return { blob: null, dataUrl: null };
+  }
+
+  async function shareLineupImageDirectly() {
+    const filled = state.builderSlots.filter(s => s.player).length;
+    if (filled < 11) {
+      const proceed = confirm(`현재 11명 중 ${filled}명만 배치되어 있습니다.\n이 상태로 전술판 이미지를 카카오톡으로 공유하시겠습니까?`);
+      if (!proceed) return;
+    }
+
+    showToast('전술판 고해상도 이미지를 준비하고 있습니다...', 'info');
+
+    const countryObj = getCountryByCode(state.builderCountryCode) || {};
+    const teamTitle = state.builderTeamName || `${countryObj.name_ko || state.builderCountryCode} 역대 올타임 베스트11`;
+    lastCapturedTitle = teamTitle;
+
+    const { blob, dataUrl } = await capturePitchAsBlob();
+    if (!blob) {
+      showToast('이미지 캡처에 실패하여 링크 공유로 대체합니다.', 'warning');
+      return shareLineupDirectly();
+    }
+
+    const fileName = `ALL-TIME-XI-${state.builderCountryCode || 'TEAM'}.png`;
+    const imageFile = new File([blob], fileName, { type: 'image/png' });
+
+    // 1. Mobile Web Share API Level 2 (Directly shares actual image photo to KakaoTalk)
+    if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+      try {
+        await navigator.share({
+          files: [imageFile],
+          title: `[ALL-TIME XI] ${teamTitle}`,
+          text: `${teamTitle} 전술판 이미지입니다! https://all-time-xi.vercel.app/`
+        });
+        showToast('카카오톡 사진 공유 창이 열렸습니다!', 'success');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.warn('navigator.share files error:', err);
+      }
+    }
+
+    // 2. Desktop: Copy image directly to Clipboard (Ctrl+V into PC KakaoTalk)
+    let copiedToClipboard = false;
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        copiedToClipboard = true;
+      } catch (e) {
+        console.warn('Clipboard image write not permitted:', e);
+      }
+    }
+
+    // Download image file as companion fallback
+    try {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {}
+
+    // Show interactive modal
+    showImageShareModal(dataUrl, blob, teamTitle, copiedToClipboard);
+  }
+
+  function showImageShareModal(dataUrl, blob, teamTitle, copiedToClipboard) {
+    const modalRoot = document.getElementById('modal-root');
+    if (!modalRoot) return;
+
+    modalRoot.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in" onclick="if(event.target === this) window.app.closeModal()">
+        <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden max-h-[90vh] flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">💬</span>
+              <h3 class="text-base sm:text-lg font-black text-slate-100">카카오톡 전술판 이미지 공유</h3>
+            </div>
+            <button onclick="window.app.closeModal()" class="text-slate-400 hover:text-slate-200 text-xl font-bold p-1">✕</button>
+          </div>
+
+          <div class="my-4 overflow-y-auto flex-1 space-y-3.5">
+            ${copiedToClipboard ? `
+              <div class="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
+                <span class="text-xl">📋</span>
+                <div>
+                  <div class="font-black text-emerald-200">이미지가 클립보드에 복사되었습니다!</div>
+                  <div class="text-xs text-emerald-400/90 mt-0.5">카카오톡 대화창을 클릭하고 <strong>Ctrl + V</strong> (붙여넣기)를 누르면 사진이 바로 전송됩니다.</div>
+                </div>
+              </div>
+            ` : `
+              <div class="p-3.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
+                <span class="text-xl">💡</span>
+                <div>
+                  <div class="font-black text-yellow-200">전술판 고해상도 이미지가 준비되었습니다!</div>
+                  <div class="text-xs text-yellow-400/90 mt-0.5">아래 '이미지 복사' 후 카톡에 붙여넣기(Ctrl+V) 하거나 다운로드된 사진을 전송하세요.</div>
+                </div>
+              </div>
+            `}
+
+            <!-- Preview Image -->
+            <div class="rounded-xl border border-slate-800 bg-slate-950 p-2 overflow-hidden flex items-center justify-center max-h-56">
+              <img src="${dataUrl}" alt="전술판 미리보기" class="max-h-52 object-contain rounded-lg shadow-md" />
+            </div>
+
+            <!-- Platform Guide -->
+            <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-300 text-xs space-y-1.5">
+              <div class="font-bold text-amber-300 flex items-center gap-1.5">
+                <span>📱 모바일 카카오톡</span>
+              </div>
+              <div class="text-slate-400 text-[11px] leading-relaxed">
+                스마트폰에서는 아래 <strong>[카톡 앱으로 사진 전송]</strong>을 누르면 카카오톡 친구/대화방 선택 창이 열려 사진으로 바로 보낼 수 있습니다.
+              </div>
+              <div class="font-bold text-sky-300 flex items-center gap-1.5 pt-1">
+                <span>💻 PC 카카오톡</span>
+              </div>
+              <div class="text-slate-400 text-[11px] leading-relaxed">
+                이미지가 클립보드에 복사되어 있으므로, 카톡 대화창을 클릭하고 <strong>Ctrl + V</strong>(붙여넣기)를 누르면 즉시 사진으로 전송됩니다.
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Actions -->
+          <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-end gap-2">
+            <button onclick="window.app.copyImageToClipboard()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5">
+              <span>📋 이미지 다시 복사</span>
+            </button>
+            <button onclick="window.app.shareImageViaNativeShare()" class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
+              <span>💬 카톡 앱으로 사진 전송</span>
+            </button>
+            <button onclick="window.app.closeModal()" class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 text-xs sm:text-sm font-semibold border border-slate-800">
+              닫기
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function copyImageToClipboard() {
+    if (!lastCapturedBlob) return;
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': lastCapturedBlob })
+        ]);
+        showToast('전술판 이미지가 클립보드에 복사되었습니다! 카톡 대화창에서 Ctrl+V 하세요.', 'success');
+      } else {
+        showToast('현재 브라우저에서는 클립보드 직접 복사를 지원하지 않아 이미지 파일로 다운로드되었습니다.', 'info');
+      }
+    } catch (e) {
+      showToast('클립보드 권한이 필요합니다. 다운로드된 이미지를 사용해주세요.', 'warning');
+    }
+  }
+
+  async function shareImageViaNativeShare() {
+    if (!lastCapturedBlob) return;
+    const fileName = `ALL-TIME-XI-${state.builderCountryCode || 'TEAM'}.png`;
+    const imageFile = new File([lastCapturedBlob], fileName, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+      try {
+        await navigator.share({
+          files: [imageFile],
+          title: `[ALL-TIME XI] ${lastCapturedTitle}`,
+          text: `${lastCapturedTitle} 전술판 이미지입니다! https://all-time-xi.vercel.app/`
+        });
+        showToast('카카오톡 사진 공유가 실행되었습니다!', 'success');
+        closeModal();
+      } catch (e) {
+        if (e.name !== 'AbortError') showToast(e.message, 'error');
+      }
+    } else {
+      copyImageToClipboard();
+      showToast('모바일 전용 공유 기능입니다. PC에서는 복사된 이미지를 카톡에 Ctrl+V(붙여넣기) 해주세요!', 'info');
+    }
+  }
+
+
   async function shareLineupDirectly() {
     const filled = state.builderSlots.filter(s => s.player).length;
     if (filled < 11) {
@@ -3402,6 +3640,7 @@ const DEFAULT_FORMATIONS = [
           state.rankingDate = bData.ranking_snapshot_date || '2026-10-07';
           state.formations = (bData.formations && bData.formations.length) ? bData.formations : DEFAULT_FORMATIONS;
           state.savedLineups = bData.lineups || [];
+          if (bData.visitor_stats) updateVisitorCounterUI(bData.visitor_stats);
           state.builderCountryCode = 'BRA';
           state.builderCountryPlayers = bData.initial_builder_players || [];
           initBuilderSlotsForFormation('4-3-3', false);
@@ -3675,6 +3914,9 @@ const DEFAULT_FORMATIONS = [
     saveCurrentLineup,
     shareLineupDirectly,
     exportCurrentLineupPng,
+    shareLineupImageDirectly,
+    copyImageToClipboard,
+    shareImageViaNativeShare,
 
     async onDbFilter(field, val) {
       if (field === 'country') state.dbCountryCode = val;

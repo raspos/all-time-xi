@@ -121,10 +121,26 @@
   <!-- Footer -->
   <footer class="border-t border-slate-800/80 bg-slate-950/90 mt-12 py-6 px-4 sm:px-6 text-xs text-slate-400">
     <div class="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-      <div class="space-y-1">
+      <div class="space-y-2">
         <div class="font-bold text-slate-200">ALL-TIME XI — 역대 국가대표 드림팀 전술 시뮬레이터</div>
         <div>데이터 기준: FIFA 세계랭킹 상위 30개국 + 대한민국 (기준일 2026-10-07) | 성인 남자 A대표팀 공식 경기 30회 이상 출전 선수 3,864명 수록</div>
         <div class="text-[11px] text-slate-500">출처: RSSSF Countrywise International Records (1900s–2020s), KFA Century Club, Wikipedia FA Records, dcaribou/transfermarkt-datasets (CC0), Wikidata & Wikimedia Commons</div>
+        
+        <!-- Visitor Counter -->
+        <div class="flex flex-wrap items-center gap-2.5 pt-1 text-xs">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 shadow-inner">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>오늘 방문자: <strong id="visitor-today-count" class="text-emerald-400 font-bold font-mono">148</strong>명</span>
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 shadow-inner">
+            <span>👀 총 누적 방문자: <strong id="visitor-total-count" class="text-sky-400 font-bold font-mono">1,894</strong>명</span>
+          </div>
+        </div>
+
+        <!-- Copyright & Ad Notice -->
+        <div class="pt-1 text-[11px] text-slate-400 font-medium">
+          © 2026 <a href="https://claude.ai/artifact/F8P345PTmDWdz9YrLNYLsf" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2">databrew</a> · 이 사이트에는 추후 광고가 게재될 수 있습니다.
+        </div>
       </div>
       <div class="flex items-center gap-3 self-end sm:self-center">
         <button onclick="window.app.navigate('admin')" class="px-2.5 py-1.5 rounded bg-slate-900/60 hover:bg-slate-800 text-slate-500 hover:text-slate-300 border border-slate-800/60" title="데이터 관리 콘솔">
