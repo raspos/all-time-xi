@@ -1031,7 +1031,12 @@ def download_saved_lineup_png(slug: str, layout: str = "portrait", scale: int = 
     if not row:
         raise HTTPException(status_code=404, detail="저장된 베스트11을 찾을 수 없습니다.")
     snap = json.loads(row["lineup_snapshot_json"])
-    png_bytes = render_lineup_png(snap, layout=layout, scale=scale)
+    scale_val = 1
+    try:
+        scale_val = int(scale) if isinstance(scale, (int, str)) and str(scale).isdigit() else 1
+    except Exception:
+        scale_val = 1
+    png_bytes = render_lineup_png(snap, layout=layout, scale=scale_val)
     filename = f"ALL-TIME-XI-{snap.get('country_fifa_code', 'TEAM')}-{layout}.png"
     return Response(
         content=png_bytes,
@@ -1044,7 +1049,12 @@ def export_direct_lineup_png(req: SaveLineupRequest, layout: str = "portrait", s
     conn = get_db()
     snapshot = build_validated_lineup_snapshot(conn, req, "direct-export")
     conn.close()
-    png_bytes = render_lineup_png(snapshot, layout=layout, scale=scale)
+    scale_val = 1
+    try:
+        scale_val = int(scale) if isinstance(scale, (int, str)) and str(scale).isdigit() else 1
+    except Exception:
+        scale_val = 1
+    png_bytes = render_lineup_png(snapshot, layout=layout, scale=scale_val)
     filename = f"ALL-TIME-XI-{snapshot['country_fifa_code']}-{layout}.png"
     return Response(
         content=png_bytes,
