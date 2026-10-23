@@ -11,6 +11,7 @@ import csv
 import json
 import uuid
 import sqlite3
+import tempfile
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
