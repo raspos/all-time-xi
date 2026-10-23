@@ -1810,10 +1810,6 @@ const DEFAULT_FORMATIONS = [
                     class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white border border-slate-700 text-xs font-bold">
               🔗 URL 복사
             </button>
-            <button onclick="window.app.shareNativeOrKakao('${escapeHtml(state.lastSavedLineupResult.lineup.team_name)}', '${escapeHtml(window.location.origin + state.lastSavedLineupResult.share_url)}')"
-                    class="px-3 py-1.5 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs font-black">
-              💬 카카오톡·모바일 공유
-            </button>
             <a href="${escapeHtml(state.lastSavedLineupResult.png_portrait_url)}" download
                class="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black">
               ⬇️ 세로형 PNG (1080×1350)
@@ -2366,12 +2362,6 @@ const DEFAULT_FORMATIONS = [
                       </button>
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
-                      <button onclick="window.app.shareSavedLineupDirectly('${escapeHtml(teamTitle)}', '${escapeHtml(l.share_slug)}')"
-                              class="py-2 px-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 shadow"
-                              title="카카오톡으로 공유">
-                        <span>💬</span>
-                        <span>카톡</span>
-                      </button>
                       <button onclick="window.app.copyShareUrl('${escapeHtml(shareUrl)}')"
                               class="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1"
                               title="공유 링크 복사">
