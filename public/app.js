@@ -1,4 +1,38 @@
 
+  
+  function formatPlayerSquadDisplayName(name) {
+    if (!name) return '선수';
+    const commonMap = {
+      '아리손 람세스 베커': '알리송',
+      '클라우디오 안드레 메르겐 타파렐': '타파렐',
+      '시아고 실바 시아고 에미리아노 실바': '티아고 실바',
+      '아르다이르 나스시멘토 도스 산투스': '알다이르',
+      '카를로스 헨리케 카세미로': '카세미루',
+      '호베르투 카를루스 다 시우바 호샤': '호베르투 카를루스',
+      '다니엘 알베르토 파사렐라': '다니엘 파사렐라',
+      '하비에르 아델마르 자네티': '하비에르 자네티',
+      '우발도 마틸도 필롤': '우발도 필롤',
+      '가브리엘 오마르 바티스투타': '바티스투타',
+      '디에고 아르만도 마라도나': '디에고 마라도나',
+      '후안 파블로 소린': '후안 파블로 소린',
+      '호나우두 루이스 나자리오 데 리마': '호나우두',
+      '호나우두 데 아시스 모레이라': '호나우지뉴',
+      '에드손 아란테스 도 나시멘토': '펠레',
+      '아르투르 안투네스 코임브라': '지쿠',
+      '리카르도 이젝손 도스 산토스 레이치': '카카',
+      '오스카르 알프레도 루헤리': '오스카르 루헤리'
+    };
+    if (commonMap[name]) return commonMap[name];
+    name = name.split('(')[0].trim();
+    const words = name.split(/\s+/);
+    if (words.length > 3) {
+      const unique = Array.from(new Set(words));
+      if (unique.length <= 2) return unique.join(' ');
+      return `${unique[0]} ${unique[unique.length - 1]}`;
+    }
+    return name;
+  }
+
   function getDisplayShortName(name) {
     if (!name) return '선수';
     name = name.split('(')[0].trim();
@@ -2163,37 +2197,56 @@ const DEFAULT_FORMATIONS = [
                     </div>
                   ` : ''}
 
-                  <!-- 11 Players Structured Grid: 2 generous columns on desktop & tablet, never squished -->
-                  <div>
-                    <div class="text-xs font-bold text-slate-300 mb-2.5 flex items-center justify-between">
-                      <span class="flex items-center gap-1.5">
+                  <!-- 11 Players Position-Line Squad Layout: Universal & 100% Squish-Proof on all PCs & Mobiles -->
+                  <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3 shadow-inner">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                      <div class="flex items-center gap-2">
                         <span class="text-base">👥</span>
-                        <span class="font-extrabold text-slate-200">선발 11명 명단</span>
-                      </span>
-                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-bold">${players.length}명 완비</span>
+                        <span class="text-xs font-black text-slate-200">선발 11명 라인업 (포지션 라인별 명단)</span>
+                      </div>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 font-bold font-mono">${players.length}명 완비</span>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                      ${players.length ? players.map(p => {
-                        const pName = p.name_ko || p.name_en || '선수';
-                        const pPos = p.slot_code || p.primary_position || 'XI';
-                        const isC = p.is_captain;
-                        const badgeColor = pPos.startsWith('GK') ? 'bg-amber-400/15 text-amber-300 border-amber-400/40' :
-                                           (pPos.includes('B') || pPos.includes('DF')) ? 'bg-sky-400/15 text-sky-300 border-sky-400/40' :
-                                           pPos.includes('M') ? 'bg-emerald-400/15 text-emerald-300 border-emerald-400/40' :
-                                           'bg-rose-400/15 text-rose-300 border-rose-400/40';
+
+                    ${(() => {
+                      const lines = { FW: [], MF: [], DF: [], GK: [] };
+                      players.forEach(p => {
+                        const pos = (p.slot_code || p.primary_position || 'XI').toUpperCase();
+                        if (pos.startsWith('GK')) {
+                          lines.GK.push(p);
+                        } else if (pos.includes('B') || pos.includes('DF') || pos.includes('CB') || pos.includes('LB') || pos.includes('RB')) {
+                          lines.DF.push(p);
+                        } else if (pos.includes('M') || pos.includes('CM') || pos.includes('CAM') || pos.includes('CDM') || pos.includes('LM') || pos.includes('RM')) {
+                          lines.MF.push(p);
+                        } else {
+                          lines.FW.push(p);
+                        }
+                      });
+
+                      const renderLine = (label, linePlayers, badgeColor, textColor) => {
+                        if (!linePlayers.length) return '';
                         return `
-                          <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-950 border ${isC ? 'border-amber-400/80 bg-amber-950/20 shadow-sm' : 'border-slate-800/90'} transition hover:border-slate-700">
-                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                              <span class="text-[11px] font-black px-1.5 py-0.5 rounded border ${badgeColor} font-mono shrink-0">${escapeHtml(pPos)}</span>
-                              <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(pName)}</span>
+                          <div class="flex items-start gap-2.5 text-xs">
+                            <span class="w-14 px-2 py-1 rounded-lg ${badgeColor} text-[11px] font-black text-center shrink-0 tracking-wider">${label}</span>
+                            <div class="flex items-center gap-x-2 gap-y-1.5 flex-wrap text-slate-200 pt-0.5 font-medium">
+                              ${linePlayers.map(p => `
+                                <span class="inline-flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 hover:border-slate-700 shadow-sm transition">
+                                  <strong class="text-slate-100 font-bold text-xs">${escapeHtml(formatPlayerSquadDisplayName(p.name_ko || p.name_en))}</strong>
+                                  <span class="text-[10px] ${textColor} font-mono font-bold">(${escapeHtml(p.slot_code || p.primary_position || '')})</span>
+                                  ${p.is_captain ? `<span class="text-[9px] px-1 rounded bg-amber-400 text-slate-950 font-black">C</span>` : ''}
+                                </span>
+                              `).join('')}
                             </div>
-                            ${isC ? `<span class="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black shrink-0 tracking-wider">주장</span>` : ''}
                           </div>
                         `;
-                      }).join('') : `
-                        <div class="col-span-full text-xs text-slate-500 p-3 text-center">선수 명단이 없습니다.</div>
-                      `}
-                    </div>
+                      };
+
+                      return [
+                        renderLine('FW 공격', lines.FW, 'bg-rose-500/20 text-rose-300 border border-rose-500/40', 'text-rose-400'),
+                        renderLine('MF 미드', lines.MF, 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40', 'text-emerald-400'),
+                        renderLine('DF 수비', lines.DF, 'bg-sky-500/20 text-sky-300 border border-sky-500/40', 'text-sky-400'),
+                        renderLine('GK 골키', lines.GK, 'bg-amber-500/20 text-amber-300 border border-amber-500/40', 'text-amber-400')
+                      ].join('');
+                    })()}
                   </div>
                 </div>
 

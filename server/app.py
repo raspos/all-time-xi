@@ -1673,6 +1673,9 @@ EMBEDDED_INDEX_HTML = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>ALL-TIME XI — 역대 최강의 국가대표를 만들어라</title>
     <!-- __DYNAMIC_OG_REPLACE__ -->
   <!-- Open Graph / KakaoTalk Preview Meta Tags -->
@@ -1828,7 +1831,7 @@ EMBEDDED_INDEX_HTML = """<!DOCTYPE html>
 
         <!-- Copyright & Ad Notice -->
         <div class="pt-1 text-[11px] text-slate-400 font-medium">
-          © 2026 <a href="https://raspos.github.io/databrew/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2">databrew</a> · 이 사이트에는 추후 광고가 게재될 수 있습니다.
+          © 2026 <a href="https://raspos.github.io/databrew/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2">databrew</a> · 이 사이트에는 추후 광고가 게재될 수 있습니다. <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-emerald-400 font-mono">v2.3</span>
         </div>
       </div>
       <div class="flex items-center gap-3 self-end sm:self-center">
@@ -1845,7 +1848,7 @@ EMBEDDED_INDEX_HTML = """<!DOCTYPE html>
   <div id="toast-root" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
 
   <script src="/static/html2canvas.min.js"></script>
-  <script src="/app.js?v=2.2"></script>
+  <script src="/app.js?v=20261023_v3"></script>
 </body>
 </html>
 """
