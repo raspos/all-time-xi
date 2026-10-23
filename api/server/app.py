@@ -36,6 +36,7 @@ app = FastAPI(
     description="역대 최강의 국가대표 베스트11 제작·공유·AI 가상 대결 플랫폼 API",
     version="1.0.0"
 )
+handler = app
 
 app.add_middleware(
     CORSMiddleware,
