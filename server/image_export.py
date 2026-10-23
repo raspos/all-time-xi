@@ -338,7 +338,7 @@ def render_lineup_png(lineup_data: Dict[str, Any], layout: str = "portrait", sca
 
     px0, py0, px1, py1 = pitch_box
     pw, ph = px1 - px0, py1 - py0
-    node_r = (36 if layout == "landscape" else 46) * scale
+    node_r = (46 if layout == "landscape" else 58) * scale
 
     players = lineup_data.get("players", [])
     for p in players:

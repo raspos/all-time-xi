@@ -1366,8 +1366,8 @@ const DEFAULT_FORMATIONS = [
         ? '#34d399'
         : ks;
 
-      const nodeSize = compact ? 'w-11 h-11 sm:w-12 sm:h-12' : 'w-14 h-14 sm:w-16 sm:h-16';
-      const nameMaxW = compact ? 'max-w-[88px] text-[10px]' : 'max-w-[110px] sm:max-w-[136px] text-xs sm:text-sm';
+      const nodeSize = compact ? 'w-12 h-12 sm:w-14 sm:h-14' : 'w-16 h-16 sm:w-20 sm:h-20';
+      const nameMaxW = compact ? 'max-w-[96px] text-[10px]' : 'max-w-[130px] sm:max-w-[160px] text-xs sm:text-sm font-black';
 
       if (!p) {
         return `
@@ -1399,14 +1399,14 @@ const DEFAULT_FORMATIONS = [
             <!-- Portrait or Jersey Circle -->
             <div class="relative ${nodeSize} rounded-full overflow-hidden flex items-center justify-center shadow-xl"
                  style="background:${kp}; color:${kt}; border:3px solid ${ringColor};">
-              <span class="font-black text-sm sm:text-lg select-none">${escapeHtml(num)}</span>
+              <span class="font-black text-base sm:text-2xl select-none">${escapeHtml(num)}</span>
               ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name_ko)}" class="absolute inset-0 w-full h-full object-cover object-top" onerror="this.style.display='none'" />` : ''}
             </div>
           </div>
           <!-- Player Name & Caps Plate -->
-          <div class="mt-1 px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-950/90 border ${lowSuit ? 'border-rose-500' : isFocused ? 'border-amber-400' : 'border-slate-700/90'} text-center shadow-lg">
+          <div class="mt-1 px-2 sm:px-2.5 py-0.5 rounded-lg bg-slate-950/95 border-2 ${lowSuit ? 'border-rose-500' : isFocused ? 'border-amber-400' : 'border-slate-700'} text-center shadow-2xl backdrop-blur-sm">
             <div class="font-black text-white truncate ${nameMaxW} leading-tight" title="${escapeHtml(formatNameKoEn(p))}">${escapeHtml(formatNameKoEn(p))}</div>
-            ${!compact ? `<div class="text-[9px] sm:text-[10px] text-slate-400 leading-tight whitespace-nowrap">${escapeHtml(p.official_caps)}경기 · ${escapeHtml((p.active_period_label || '').slice(0, 9))}</div>` : ''}
+            ${!compact ? `<div class="text-[10px] sm:text-xs text-amber-300 font-bold leading-tight whitespace-nowrap">${escapeHtml(p.official_caps)}경기 · ${escapeHtml((p.active_period_label || '').slice(0, 9))}</div>` : ''}
             ${lowSuit ? `<div class="text-[9px] font-bold text-rose-400 leading-tight">⚠ 포지션 적합도 낮음</div>` : ''}
           </div>
         </div>
@@ -3448,15 +3448,42 @@ const DEFAULT_FORMATIONS = [
     return null;
   }
 
+  async function preparePitchBoardForCapture(pitchEl) {
+    if (!pitchEl) return;
+    const imgs = Array.from(pitchEl.querySelectorAll('img'));
+    await Promise.all(imgs.map(async (img) => {
+      const src = img.getAttribute('src');
+      if (!src || src.startsWith('data:')) return;
+      try {
+        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(src)}`;
+        const resp = await fetch(proxyUrl);
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const base64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          img.setAttribute('src', base64);
+        }
+      } catch (err) {
+        console.warn('preparePitchBoardForCapture image convert error:', err);
+      }
+    }));
+  }
+
   async function capturePitchAsBlob() {
-    // 1. Try html2canvas first (client-side DOM capture)
+    // 1. WYSIWYG Client-side Screen Capture of exact pitch board
     const pitchEl = document.getElementById('tactical-pitch-board');
     if (window.html2canvas && pitchEl) {
       try {
+        // Pre-convert images to base64 Data URLs so canvas is never tainted
+        await preparePitchBoardForCapture(pitchEl);
+
         const canvas = await window.html2canvas(pitchEl, {
-          scale: 2.0,
+          scale: 2.5,
           useCORS: true,
-          allowTaint: true,
+          allowTaint: false,
           backgroundColor: '#070b14',
           logging: false
         });
