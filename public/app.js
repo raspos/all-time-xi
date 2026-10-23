@@ -3592,15 +3592,58 @@ const DEFAULT_FORMATIONS = [
             <button onclick="window.app.closeModal()" class="text-slate-400 hover:text-white text-2xl font-bold p-1 leading-none">✕</button>
           </div>
 
-          <!-- Prominent Kakao Sharing Guide Banner -->
-          <div class="mt-3.5 p-4 rounded-xl bg-gradient-to-r from-amber-400/20 via-yellow-400/15 to-emerald-500/15 border border-amber-400/40 space-y-2">
-            <div class="flex items-center gap-2 text-amber-300 font-black text-sm">
-              <span class="text-xl">💬</span>
-              <span>카카오톡 전송 안내: 이미지가 클립보드에 복사되었습니다!</span>
+          <!-- PC 카카오톡 친절 3단계 안내 가이드 카드 -->
+          <div class="mt-3.5 p-4 sm:p-4.5 rounded-2xl bg-gradient-to-br from-yellow-500/20 via-amber-500/10 to-slate-900 border-2 border-yellow-400/50 shadow-xl space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">💬</span>
+                <span class="text-sm sm:text-base font-black text-yellow-300 tracking-tight">PC 카카오톡으로 이미지 바로 전송하는 법</span>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold">
+                  <span>✓</span> 클립보드 복사됨
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-xs font-bold">
+                  <span>💾</span> PNG 다운로드됨
+                </span>
+              </div>
             </div>
-            <p class="text-xs text-slate-200 leading-relaxed">
-              PC 카카오톡 대화창을 클릭한 후 <strong class="px-2 py-0.5 rounded bg-slate-950 text-amber-300 font-mono border border-slate-700">Ctrl + V (붙여넣기)</strong>를 누르시면 고해상도 전술판 이미지가 채팅방에 즉시 전송됩니다.
-            </p>
+
+            <!-- 3-Step Walkthrough Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
+              <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="w-6 h-6 rounded-full bg-yellow-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow">1</span>
+                <div>
+                  <div class="text-xs font-bold text-slate-200">카톡 대화창 클릭</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5 leading-snug">PC 카톡 친구 또는 단톡방 대화 입력창을 클릭하세요.</div>
+                </div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950/80 border border-yellow-400/40 flex items-start gap-2.5 ring-1 ring-yellow-400/20">
+                <span class="w-6 h-6 rounded-full bg-yellow-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow">2</span>
+                <div>
+                  <div class="text-xs font-black text-yellow-300 flex items-center gap-1">
+                    <span class="px-1.5 py-0.5 rounded bg-yellow-400 text-slate-950 font-mono text-[10px] font-bold">Ctrl + V</span>
+                    <span>붙여넣기</span>
+                  </div>
+                  <div class="text-[11px] text-slate-300 mt-0.5 leading-snug">대화창에서 <strong>Ctrl + V</strong>를 누르면 이미지 첨부창이 뜹니다.</div>
+                </div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-start gap-2.5">
+                <span class="w-6 h-6 rounded-full bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow">3</span>
+                <div>
+                  <div class="text-xs font-bold text-emerald-300">엔터(Enter) 전송</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5 leading-snug">고화질 전술판 완성 이미지가 채팅방에 즉시 전송됩니다!</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 백업 안내: 자동 다운로드 및 파일 첨부 -->
+            <div class="pt-2 border-t border-yellow-400/20 text-xs text-slate-300 flex items-start sm:items-center gap-2 leading-relaxed">
+              <span class="text-base shrink-0">💡</span>
+              <div>
+                <strong>붙여넣기가 안 될 때 백업 방법:</strong> 방금 PC 다운로드 폴더로 자동 저장된 <span class="text-yellow-300 font-mono font-bold">PNG 파일</span>을 마우스로 카카오톡 대화창에 <strong>쓱 끌어다 놓기(드래그)</strong> 하셔도 바로 전송됩니다.
+              </div>
+            </div>
           </div>
 
           <!-- Large High-Res Image Preview Box -->
@@ -3685,16 +3728,28 @@ const DEFAULT_FORMATIONS = [
       }
     }
 
-    // 2. Desktop PC: Copy image directly to Clipboard (Ctrl+V into PC KakaoTalk)
+    // 2. Desktop PC: Copy image directly to Clipboard and auto download as companion
     let copied = false;
     if (navigator.clipboard && window.ClipboardItem) {
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
         copied = true;
-        showToast('✅ 전술판 이미지가 복사되었습니다! 카톡 대화창에서 Ctrl + V 하세요.', 'success');
+        showToast('✅ 이미지가 복사되고 PNG 파일이 다운로드되었습니다! 카톡 대화창에서 Ctrl + V 하세요.', 'success');
       } catch (e) {
         console.warn('Clipboard write error:', e);
       }
+    }
+
+    // Auto download companion PNG file on PC
+    try {
+      const dlLink = document.createElement('a');
+      dlLink.href = dataUrl;
+      dlLink.download = fileName;
+      document.body.appendChild(dlLink);
+      dlLink.click();
+      document.body.removeChild(dlLink);
+    } catch (e) {
+      console.warn('Auto download error:', e);
     }
 
     const slug = (state.lastSavedLineupResult && state.lastSavedLineupResult.share_slug) || '';
@@ -3812,9 +3867,19 @@ const DEFAULT_FORMATIONS = [
           new ClipboardItem({ 'image/png': blob })
         ]);
         copied = true;
-        showToast('✅ 전술판 이미지가 복사되었습니다! 카톡 대화창에서 Ctrl + V (붙여넣기) 하세요.', 'success');
+        showToast('✅ 이미지가 복사되고 PNG 파일이 다운로드되었습니다! 카톡 대화창에서 Ctrl + V 하세요.', 'success');
       } catch (e) {}
     }
+
+    // Auto download companion PNG file on PC
+    try {
+      const dlLink = document.createElement('a');
+      dlLink.href = pngUrl;
+      dlLink.download = `ALL-TIME-XI-${teamTitle}.png`;
+      document.body.appendChild(dlLink);
+      dlLink.click();
+      document.body.removeChild(dlLink);
+    } catch (e) {}
 
     // Also copy URL to clipboard as companion
     try {
