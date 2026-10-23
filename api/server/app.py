@@ -1677,6 +1677,8 @@ def render_spa_with_og_tags(title: str, description: str, image_url: str, initia
         Path("/var/task/api/public/index.html"),
         Path("public/index.html"),
         Path("api/public/index.html"),
+        Path(__file__).resolve().parent / "templates" / "index.html",
+        ROOT_DIR / "server" / "templates" / "index.html",
     ]
     index_html_path = next((p for p in candidates if p.exists()), None)
     if index_html_path and index_html_path.exists():
