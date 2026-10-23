@@ -3621,8 +3621,8 @@ const DEFAULT_FORMATIONS = [
             </div>
 
             <div class="flex items-center gap-2">
-              <button onclick="window.app.launchPcKakaoTalk()" class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
-                <span>💬 카카오톡 열기</span>
+              <button onclick="window.app.copyImageToClipboard()" class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
+                <span>📋 이미지 복사 (카톡에 Ctrl+V)</span>
               </button>
               <button onclick="window.app.closeModal()" class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 text-xs sm:text-sm font-semibold border border-slate-800">
                 닫기
@@ -3687,7 +3687,25 @@ const DEFAULT_FORMATIONS = [
   }
 
   async function copyImageToClipboard() {
-    if (!lastCapturedBlob) return;
+    if (!lastCapturedBlob && lastCapturedDataUrl) {
+      try {
+        const resp = await fetch(lastCapturedDataUrl);
+        if (resp.ok) {
+          lastCapturedBlob = await resp.blob();
+        }
+      } catch (e) {
+        console.warn('Failed to fetch blob from dataUrl', e);
+      }
+    }
+    if (!lastCapturedBlob) {
+      if (lastCapturedDataUrl) {
+        window.open(lastCapturedDataUrl, '_blank');
+        showToast('새 탭에서 이미지가 열렸습니다. 우클릭하여 [이미지 복사] 하세요!', 'info');
+      } else {
+        showToast('복사할 이미지를 찾을 수 없습니다.', 'warning');
+      }
+      return;
+    }
     try {
       if (navigator.clipboard && window.ClipboardItem) {
         await navigator.clipboard.write([
@@ -3726,12 +3744,12 @@ const DEFAULT_FORMATIONS = [
 
   async function shareSavedLineupDirectly(teamTitle, slug) {
     const shareUrl = `${window.location.origin}/team/${slug}`;
-    const shareText = `[ALL-TIME XI] ${teamTitle}
-역대 국가대표 최강 베스트11 전술판을 확인해보세요!
-${shareUrl}`;
 
     // Always copy URL first so it is in user clipboard
-    await copyShareUrl(shareUrl);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('🔗 카톡 공유 링크가 복사되었습니다! 대화창에 Ctrl+V 하세요.', 'success');
+    } catch (e) {}
 
     // If mobile navigator.share is available, trigger it
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -3748,8 +3766,8 @@ ${shareUrl}`;
       }
     }
 
-    // Show PC-friendly Kakao Share Guidance Modal
-    showKakaoLinkShareModal(teamTitle, shareUrl, slug);
+    // Open image preview lightbox on PC so user can preview or copy image
+    openSavedLineupImagePreview(teamTitle, slug);
   }
 
   function showKakaoLinkShareModal(teamTitle, shareUrl, slug) {
