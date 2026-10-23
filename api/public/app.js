@@ -3271,20 +3271,35 @@ const DEFAULT_FORMATIONS = [
     if (window.html2canvas && pitchEl) {
       try {
         const canvas = await window.html2canvas(pitchEl, {
-          scale: 2.5,
+          scale: 2.0,
           useCORS: true,
-          allowTaint: true,
+          allowTaint: false,
           backgroundColor: '#070b14',
           logging: false
         });
         const dataUrl = canvas.toDataURL('image/png');
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        lastCapturedBlob = blob;
-        lastCapturedDataUrl = dataUrl;
-        return { blob, dataUrl };
+        if (blob) {
+          lastCapturedBlob = blob;
+          lastCapturedDataUrl = dataUrl;
+          return { blob, dataUrl };
+        }
       } catch (err) {
         console.warn('html2canvas blob capture error:', err);
       }
+    }
+    // Fallback: try fetching current saved lineup PNG or default og image
+    if (state.lastSavedLineupResult && state.lastSavedLineupResult.share_slug) {
+      try {
+        const sResp = await fetch(`/api/lineups/${state.lastSavedLineupResult.share_slug}/png?layout=portrait`);
+        if (sResp.ok) {
+          const sBlob = await sResp.blob();
+          const sDataUrl = URL.createObjectURL(sBlob);
+          lastCapturedBlob = sBlob;
+          lastCapturedDataUrl = sDataUrl;
+          return { blob: sBlob, dataUrl: sDataUrl };
+        }
+      } catch (e) {}
     }
     return { blob: null, dataUrl: null };
   }
@@ -3358,9 +3373,13 @@ const DEFAULT_FORMATIONS = [
     const modalRoot = document.getElementById('modal-root');
     if (!modalRoot) return;
 
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const countryObj = getCountryByCode(state.builderCountryCode) || {};
+    const teamName = teamTitle || `${countryObj.name_ko || ''} 역대 베스트11`;
+
     modalRoot.innerHTML = `
       <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in" onclick="if(event.target === this) window.app.closeModal()">
-        <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden max-h-[92vh] flex flex-col">
           <div class="flex items-center justify-between pb-3 border-b border-slate-800">
             <div class="flex items-center gap-2">
               <span class="text-xl">💬</span>
@@ -3369,21 +3388,21 @@ const DEFAULT_FORMATIONS = [
             <button onclick="window.app.closeModal()" class="text-slate-400 hover:text-slate-200 text-xl font-bold p-1">✕</button>
           </div>
 
-          <div class="my-4 overflow-y-auto flex-1 space-y-3.5">
+          <div class="my-4 overflow-y-auto flex-1 space-y-3.5 pr-1">
             ${copiedToClipboard ? `
               <div class="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
                 <span class="text-xl">📋</span>
                 <div>
-                  <div class="font-black text-emerald-200">이미지가 클립보드에 복사되었습니다!</div>
-                  <div class="text-xs text-emerald-400/90 mt-0.5">카카오톡 대화창을 클릭하고 <strong>Ctrl + V</strong> (붙여넣기)를 누르면 사진이 바로 전송됩니다.</div>
+                  <div class="font-black text-emerald-200">전술판 이미지가 클립보드에 복사되었습니다!</div>
+                  <div class="text-xs text-emerald-400/90 mt-0.5">카카오톡 대화창에서 <strong>Ctrl + V</strong> (붙여넣기)를 누르면 사진이 바로 전송됩니다.</div>
                 </div>
               </div>
             ` : `
               <div class="p-3.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
                 <span class="text-xl">💡</span>
                 <div>
-                  <div class="font-black text-yellow-200">전술판 고해상도 이미지가 준비되었습니다!</div>
-                  <div class="text-xs text-yellow-400/90 mt-0.5">아래 '이미지 복사' 후 카톡에 붙여넣기(Ctrl+V) 하거나 다운로드된 사진을 전송하세요.</div>
+                  <div class="font-black text-yellow-200">고해상도 전술판 이미지가 준비되었습니다!</div>
+                  <div class="text-xs text-yellow-400/90 mt-0.5">아래 '이미지 복사' 후 카톡 대화창에 붙여넣기(Ctrl+V) 하세요.</div>
                 </div>
               </div>
             `}
@@ -3394,37 +3413,51 @@ const DEFAULT_FORMATIONS = [
             </div>
 
             <!-- Platform Guide -->
-            <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-300 text-xs space-y-1.5">
+            <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-300 text-xs space-y-2">
               <div class="font-bold text-amber-300 flex items-center gap-1.5">
-                <span>📱 모바일 카카오톡</span>
+                <span>💻 PC 카카오톡 공유 방법</span>
+              </div>
+              <div class="text-slate-300 text-xs leading-relaxed space-y-1">
+                <div>1. 이미지가 클립보드에 복사되어 있습니다.</div>
+                <div>2. 아래 <strong>[카카오톡 PC버전 열기]</strong>를 누르거나 카톡 창을 엽니다.</div>
+                <div>3. 원하는 친구/대화방에서 <strong>Ctrl + V</strong>(붙여넣기) 후 전송을 누르면 끝!</div>
+              </div>
+
+              <div class="font-bold text-sky-300 flex items-center gap-1.5 pt-2 border-t border-slate-700/50">
+                <span>📱 스마트폰 카카오톡</span>
               </div>
               <div class="text-slate-400 text-[11px] leading-relaxed">
-                스마트폰에서는 아래 <strong>[카톡 앱으로 사진 전송]</strong>을 누르면 카카오톡 친구/대화방 선택 창이 열려 사진으로 바로 보낼 수 있습니다.
-              </div>
-              <div class="font-bold text-sky-300 flex items-center gap-1.5 pt-1">
-                <span>💻 PC 카카오톡</span>
-              </div>
-              <div class="text-slate-400 text-[11px] leading-relaxed">
-                이미지가 클립보드에 복사되어 있으므로, 카톡 대화창을 클릭하고 <strong>Ctrl + V</strong>(붙여넣기)를 누르면 즉시 사진으로 전송됩니다.
+                모바일에서는 아래 <strong>[카톡 사진 바로 전송]</strong>을 누르면 카카오톡 공유 창이 즉시 열립니다.
               </div>
             </div>
           </div>
 
           <!-- Modal Actions -->
-          <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-end gap-2">
-            <button onclick="window.app.copyImageToClipboard()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5">
+          <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+            <button onclick="window.app.copyImageToClipboard()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5">
               <span>📋 이미지 다시 복사</span>
             </button>
-            <button onclick="window.app.shareImageViaNativeShare()" class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
-              <span>💬 카톡 앱으로 사진 전송</span>
-            </button>
-            <button onclick="window.app.closeModal()" class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 text-xs sm:text-sm font-semibold border border-slate-800">
-              닫기
-            </button>
+            <div class="flex items-center gap-2">
+              <button onclick="window.app.launchPcKakaoTalk()" class="px-3.5 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
+                <span>💬 카카오톡 열기</span>
+              </button>
+              <button onclick="window.app.closeModal()" class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 text-xs sm:text-sm font-semibold border border-slate-800">
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       </div>
     `;
+  }
+
+  function launchPcKakaoTalk() {
+    try {
+      window.location.href = 'kakaotalk://';
+      showToast('카카오톡 PC버전을 실행합니다. 대화창에 Ctrl + V (붙여넣기) 하세요!', 'success');
+    } catch (e) {
+      showToast('카카오톡 대화창에서 Ctrl + V (붙여넣기)를 눌러주세요!', 'info');
+    }
   }
 
   async function copyImageToClipboard() {
@@ -3436,10 +3469,10 @@ const DEFAULT_FORMATIONS = [
         ]);
         showToast('전술판 이미지가 클립보드에 복사되었습니다! 카톡 대화창에서 Ctrl+V 하세요.', 'success');
       } else {
-        showToast('현재 브라우저에서는 클립보드 직접 복사를 지원하지 않아 이미지 파일로 다운로드되었습니다.', 'info');
+        showToast('이미지 파일로 다운로드되었습니다. 카톡 창에 드래그하거나 첨부하세요.', 'info');
       }
     } catch (e) {
-      showToast('클립보드 권한이 필요합니다. 다운로드된 이미지를 사용해주세요.', 'warning');
+      showToast('카톡 대화창에서 Ctrl+V를 누르거나 다운로드된 이미지를 사용해주세요.', 'info');
     }
   }
 
@@ -3461,38 +3494,99 @@ const DEFAULT_FORMATIONS = [
       }
     } else {
       copyImageToClipboard();
-      showToast('모바일 전용 공유 기능입니다. PC에서는 복사된 이미지를 카톡에 Ctrl+V(붙여넣기) 해주세요!', 'info');
+      launchPcKakaoTalk();
     }
   }
 
-
-  
   async function shareSavedLineupDirectly(teamTitle, slug) {
     const shareUrl = `${window.location.origin}/team/${slug}`;
-    const shareText = `[ALL-TIME XI] ${teamTitle}\n역대 국가대표 최강 베스트11 전술판을 확인해보세요!\n${shareUrl}`;
+    const shareText = `[ALL-TIME XI] ${teamTitle}
+역대 국가대표 최강 베스트11 전술판을 확인해보세요!
+${shareUrl}`;
 
-    if (navigator.share) {
+    // Always copy URL first so it is in user clipboard
+    await copyShareUrl(shareUrl);
+
+    // If mobile navigator.share is available, trigger it
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {
       try {
         await navigator.share({
           title: `[ALL-TIME XI] ${teamTitle}`,
           text: `${teamTitle} — 역대 국가대표 최강 베스트11 전술판!`,
           url: shareUrl
         });
-        showToast('카카오톡 공유가 실행되었습니다!', 'success');
         return;
       } catch (e) {
         if (e.name === 'AbortError') return;
       }
     }
 
-    await copyShareUrl(shareUrl);
-    showToast('카카오톡 공유 링크가 복사되었습니다! 대화창에 붙여넣기(Ctrl+V) 하세요.', 'success');
+    // Show PC-friendly Kakao Share Guidance Modal
+    showKakaoLinkShareModal(teamTitle, shareUrl, slug);
+  }
+
+  function showKakaoLinkShareModal(teamTitle, shareUrl, slug) {
+    const modalRoot = document.getElementById('modal-root');
+    if (!modalRoot) return;
+
+    modalRoot.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in" onclick="if(event.target === this) window.app.closeModal()">
+        <div class="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden max-h-[92vh] flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">💬</span>
+              <h3 class="text-base sm:text-lg font-black text-slate-100">카카오톡 링크 공유</h3>
+            </div>
+            <button onclick="window.app.closeModal()" class="text-slate-400 hover:text-slate-200 text-xl font-bold p-1">✕</button>
+          </div>
+
+          <div class="my-4 space-y-3.5">
+            <div class="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
+              <span class="text-xl">🔗</span>
+              <div>
+                <div class="font-black text-emerald-200">공유 링크가 클립보드에 복사되었습니다!</div>
+                <div class="text-xs text-emerald-400/90 mt-0.5">카톡 대화창에 <strong>Ctrl + V</strong>(붙여넣기) 하면 썸네일 미리보기가 표시됩니다.</div>
+              </div>
+            </div>
+
+            <!-- Preview Card (shows how KakaoTalk renders the link with OG image) -->
+            <div class="rounded-xl border border-slate-800 bg-slate-950 p-3 space-y-2">
+              <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">카카오톡 미리보기 카드</div>
+              <div class="rounded-lg overflow-hidden border border-slate-800 bg-slate-900">
+                <img src="/og-image.png" alt="전술판 썸네일" class="w-full h-32 object-cover" />
+                <div class="p-2.5">
+                  <div class="text-xs font-bold text-slate-100">${escapeHtml(teamTitle)}</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">ALL-TIME XI 역대 국가대표 최강 베스트11 전술판</div>
+                  <div class="text-[10px] text-amber-400/80 mt-1">${escapeHtml(shareUrl)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+            <button onclick="window.app.copyShareUrl('${escapeHtml(shareUrl)}')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1">
+              <span>📋 링크 다시 복사</span>
+            </button>
+            <div class="flex items-center gap-2">
+              <button onclick="window.app.launchPcKakaoTalk()" class="px-3.5 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-yellow-400/20 transition flex items-center gap-1.5">
+                <span>💬 카카오톡 열기</span>
+              </button>
+              <button onclick="window.app.closeModal()" class="px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 text-xs sm:text-sm font-semibold border border-slate-800">
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   async function shareLineupDirectly() {
     const filled = state.builderSlots.filter(s => s.player).length;
     if (filled < 11) {
-      const proceed = confirm(`현재 11명 중 ${filled}명만 배치되어 있습니다.\n이 상태로 전술판을 카카오톡으로 공유하시겠습니까?`);
+      const proceed = confirm(`현재 11명 중 ${filled}명만 배치되어 있습니다.
+이 상태로 전술판을 카카오톡으로 공유하시겠습니까?`);
       if (!proceed) return;
     }
 
@@ -3500,9 +3594,11 @@ const DEFAULT_FORMATIONS = [
 
     let shareUrl = window.location.href;
     let teamTitle = state.builderTeamName || `${state.builderCountryCode} 역대 최강 베스트11`;
+    let slug = '';
     try {
       const res = await saveCurrentLineup(true);
       if (res && res.share_slug) {
+        slug = res.share_slug;
         shareUrl = `${window.location.origin}/team/${res.share_slug}`;
         if (res.lineup && res.lineup.team_name) {
           teamTitle = res.lineup.team_name;
@@ -3512,45 +3608,23 @@ const DEFAULT_FORMATIONS = [
       console.warn('Auto-save error before share:', e);
     }
 
-    const shareTitle = `[ALL-TIME XI] ${teamTitle}`;
-    const shareText = `${shareTitle}\n내가 선정한 국가대표 역대 최강 베스트11 전술판을 확인해보세요!\n${shareUrl}`;
+    await copyShareUrl(shareUrl);
 
-    // 1. Web Share API (Opens native KakaoTalk on smartphones and tablets)
-    if (navigator.share) {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {
       try {
         await navigator.share({
-          title: shareTitle,
-          text: `${shareTitle} — 내가 만든 국가대표 역대 최강 베스트11 전술판을 확인하세요!`,
+          title: `[ALL-TIME XI] ${teamTitle}`,
+          text: `${teamTitle} — 내가 만든 국가대표 역대 최강 베스트11 전술판을 확인하세요!`,
           url: shareUrl
         });
-        showToast('카카오톡 공유가 실행되었습니다!', 'success');
         return;
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.warn('navigator.share failed:', err);
-        } else {
-          return;
-        }
+        if (err.name === 'AbortError') return;
       }
     }
 
-    // 2. Mobile KakaoTalk Direct Scheme Fallback
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
-      const kakaoScheme = `kakaotalk://msg/send?text=${encodeURIComponent(shareText)}`;
-      window.location.href = kakaoScheme;
-      setTimeout(async () => {
-        await copyShareUrl(shareUrl);
-        showToast('카카오톡 공유 링크가 복사되었습니다! 대화창에 붙여넣기(Ctrl+V) 하세요.', 'success');
-      }, 1200);
-      return;
-    }
-
-    // 3. Desktop / Web: Copy share URL and open Kakao web share
-    await copyShareUrl(shareUrl);
-    const kakaoWebUrl = `https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
-    window.open(kakaoWebUrl, '_blank', 'width=600,height=520');
-    showToast('카카오톡 공유 링크가 복사되었습니다! 카톡 대화창에 바로 붙여넣기(Ctrl+V) 하세요.', 'success');
+    showKakaoLinkShareModal(teamTitle, shareUrl, slug);
   }
 
   async function exportCurrentLineupPng(layout = 'portrait', scale = 1) {

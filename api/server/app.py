@@ -1,3 +1,4 @@
+import re
 # -*- coding: utf-8 -*-
 """
 ALL-TIME XI — Full-Stack FastAPI Backend Server
@@ -1147,13 +1148,42 @@ def get_saved_lineup(slug: str):
     return snap
 
 @app.get("/api/lineups/{slug}/png")
-def download_saved_lineup_png(slug: str, layout: str = "portrait", scale: int = Query(1, ge=1, le=2)):
+def download_saved_lineup_png(slug: str, layout: str = "portrait", scale: int = Query(1, ge=1, le=2), download: int = Query(0)):
     conn = get_db()
     cur = conn.cursor()
+    
+    # 1. Check SQLite PNG cache
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS lineup_png_cache (
+                cache_key TEXT PRIMARY KEY,
+                png_blob BLOB NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        cache_key = f"{slug}_{layout}_{scale}"
+        cur.execute("SELECT png_blob FROM lineup_png_cache WHERE cache_key = ?", (cache_key,))
+        cache_row = cur.fetchone()
+        if cache_row:
+            png_bytes = cache_row[0]
+            conn.close()
+            disposition = "attachment" if download == 1 else "inline"
+            return Response(
+                content=png_bytes,
+                media_type="image/png",
+                headers={
+                    "Content-Disposition": f'{disposition}; filename="ALL-TIME-XI-{slug}-{layout}.png"',
+                    "Cache-Control": "public, max-age=86400, s-maxage=604800"
+                }
+            )
+    except Exception:
+        pass
+
+    # 2. Render from snapshot
     cur.execute("SELECT lineup_snapshot_json FROM saved_lineups WHERE share_slug = ?", (slug,))
     row = cur.fetchone()
-    conn.close()
     if not row:
+        conn.close()
         raise HTTPException(status_code=404, detail="저장된 베스트11을 찾을 수 없습니다.")
     snap = json.loads(row["lineup_snapshot_json"])
     scale_val = 1
@@ -1162,11 +1192,24 @@ def download_saved_lineup_png(slug: str, layout: str = "portrait", scale: int = 
     except Exception:
         scale_val = 1
     png_bytes = render_lineup_png(snap, layout=layout, scale=scale_val)
+    
+    try:
+        cur.execute("INSERT OR REPLACE INTO lineup_png_cache (cache_key, png_blob, created_at) VALUES (?, ?, ?)",
+                    (cache_key, png_bytes, datetime.now().isoformat()))
+        conn.commit()
+    except Exception:
+        pass
+    conn.close()
+
     filename = f"ALL-TIME-XI-{snap.get('country_fifa_code', 'TEAM')}-{layout}.png"
+    disposition = "attachment" if download == 1 else "inline"
     return Response(
         content=png_bytes,
         media_type="image/png",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers={
+            "Content-Disposition": f'{disposition}; filename="{filename}"',
+            "Cache-Control": "public, max-age=86400, s-maxage=604800"
+        }
     )
 
 @app.post("/api/export/lineup-png")
@@ -1641,17 +1684,33 @@ def render_spa_with_og_tags(title: str, description: str, image_url: str, initia
             html = f.read()
     else:
         html = "<html><body><h1>ALL-TIME XI</h1></body></html>"
+    
+    # Ensure absolute image URL for KakaoTalk & OpenGraph scrapers
+    abs_image_url = image_url
+    if abs_image_url and not abs_image_url.startswith("http"):
+        abs_image_url = f"https://all-time-xi.vercel.app{abs_image_url}"
+
     og_block = f"""
+    <!-- Dynamic Lineup Open Graph Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ALL-TIME XI" />
     <meta property="og:title" content="{title}" />
     <meta property="og:description" content="{description}" />
-    <meta property="og:image" content="{image_url}" />
+    <meta property="og:image" content="{abs_image_url}" />
+    <meta property="og:image:secure_url" content="{abs_image_url}" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="675" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="{title}" />
     <meta name="twitter:description" content="{description}" />
-    <meta name="twitter:image" content="{image_url}" />
+    <meta name="twitter:image" content="{abs_image_url}" />
     <script>window.__INITIAL_SHARE_CONTEXT__ = {initial_route_js or 'null'};</script>
     """
-    html = html.replace("<!-- __OG_META_INJECT__ -->", og_block)
+    if "<!-- __DYNAMIC_OG_REPLACE__ -->" in html:
+        html = re.sub(r'<!-- __DYNAMIC_OG_REPLACE__ -->[\s\S]*?<!-- __OG_META_INJECT__ -->', og_block, html)
+    else:
+        html = html.replace("<!-- __OG_META_INJECT__ -->", og_block)
     return HTMLResponse(content=html)
 
 @app.get("/team/{slug}", response_class=HTMLResponse)

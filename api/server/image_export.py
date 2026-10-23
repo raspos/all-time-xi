@@ -67,7 +67,7 @@ def fetch_cached_portrait(url: Optional[str]) -> Optional[Image.Image]:
             pass
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-        resp = requests.get(url, headers=headers, timeout=4)
+        resp = requests.get(url, headers=headers, timeout=1.5)
         if resp.status_code == 200 and len(resp.content) > 500:
             img = Image.open(io.BytesIO(resp.content)).convert("RGBA")
             img.thumbnail((200, 200), Image.Resampling.LANCZOS)
