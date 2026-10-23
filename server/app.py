@@ -117,6 +117,14 @@ def get_db() -> sqlite3.Connection:
 # ==============================================================================
 # FAST DIRECT STATIC FILE HANDLER (Bypasses ASGI Mount, Ultra-Fast CDN Caching)
 # ==============================================================================
+@app.get("/app.js")
+def serve_app_js_root():
+    return serve_static_file("app.js")
+
+@app.get("/favicon.ico")
+def serve_favicon_root():
+    return serve_static_file("favicon.ico")
+
 @app.get("/static/{file_path:path}")
 def serve_static_file(file_path: str):
     candidates = [
