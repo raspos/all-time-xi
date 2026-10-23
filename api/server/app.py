@@ -208,6 +208,11 @@ def serve_static_file(file_path: str):
 # ==============================================================================
 # HIGH-SPEED BOOTSTRAP API (Loads all initial data in 1 single HTTP request)
 # ==============================================================================
+@app.get("/api/health")
+@app.get("/health")
+def healthcheck():
+    return {"status": "ok", "service": "all-time-xi"}
+
 @app.get("/api/bootstrap")
 def get_bootstrap_data(response: Response):
     response.headers["Cache-Control"] = "public, max-age=1800, s-maxage=3600, stale-while-revalidate=86400"
