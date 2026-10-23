@@ -1308,8 +1308,8 @@ const DEFAULT_FORMATIONS = [
         ? '#34d399'
         : ks;
 
-      const nodeSize = compact ? 'w-9 h-9 sm:w-10 sm:h-10' : 'w-11 h-11 sm:w-14 sm:h-14';
-      const nameMaxW = compact ? 'max-w-[76px] text-[10px]' : 'max-w-[92px] sm:max-w-[115px] text-[11px] sm:text-xs';
+      const nodeSize = compact ? 'w-11 h-11 sm:w-12 sm:h-12' : 'w-14 h-14 sm:w-16 sm:h-16';
+      const nameMaxW = compact ? 'max-w-[88px] text-[10px]' : 'max-w-[110px] sm:max-w-[136px] text-xs sm:text-sm';
 
       if (!p) {
         return `
@@ -1341,13 +1341,13 @@ const DEFAULT_FORMATIONS = [
             <!-- Portrait or Jersey Circle -->
             <div class="relative ${nodeSize} rounded-full overflow-hidden flex items-center justify-center shadow-xl"
                  style="background:${kp}; color:${kt}; border:3px solid ${ringColor};">
-              <span class="font-black text-xs sm:text-base select-none">${escapeHtml(num)}</span>
+              <span class="font-black text-sm sm:text-lg select-none">${escapeHtml(num)}</span>
               ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name_ko)}" class="absolute inset-0 w-full h-full object-cover object-top" onerror="this.style.display='none'" />` : ''}
             </div>
           </div>
           <!-- Player Name & Caps Plate -->
           <div class="mt-1 px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-950/90 border ${lowSuit ? 'border-rose-500' : isFocused ? 'border-amber-400' : 'border-slate-700/90'} text-center shadow-lg">
-            <div class="font-bold text-white truncate ${nameMaxW} leading-tight" title="${escapeHtml(formatNameKoEn(p))}">${escapeHtml(formatNameKoEn(p))}</div>
+            <div class="font-black text-white truncate ${nameMaxW} leading-tight" title="${escapeHtml(formatNameKoEn(p))}">${escapeHtml(formatNameKoEn(p))}</div>
             ${!compact ? `<div class="text-[9px] sm:text-[10px] text-slate-400 leading-tight whitespace-nowrap">${escapeHtml(p.official_caps)}경기 · ${escapeHtml((p.active_period_label || '').slice(0, 9))}</div>` : ''}
             ${lowSuit ? `<div class="text-[9px] font-bold text-rose-400 leading-tight">⚠ 포지션 적합도 낮음</div>` : ''}
           </div>
@@ -1356,7 +1356,7 @@ const DEFAULT_FORMATIONS = [
     }).join('');
 
     return `
-      <div class="relative w-full aspect-[4/5] max-w-[640px] mx-auto rounded-2xl overflow-hidden border-2 border-slate-700/80 shadow-2xl select-none">
+      <div id="tactical-pitch-board" class="relative w-full aspect-[4/5] max-w-[660px] mx-auto rounded-2xl overflow-hidden border-2 border-slate-700/80 shadow-2xl select-none">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 w-full h-full">
           ${stripesSvg}
           <!-- Pitch markings -->
@@ -3162,6 +3162,31 @@ const DEFAULT_FORMATIONS = [
   }
 
   async function exportCurrentLineupPng(layout = 'portrait', scale = 1) {
+    const pitchEl = document.getElementById('tactical-pitch-board');
+    if (window.html2canvas && pitchEl) {
+      showToast('화면에 보이는 전술판을 2배 고화질(WYSIWYG)로 캡처하는 중입니다...', 'info');
+      try {
+        const canvas = await window.html2canvas(pitchEl, {
+          scale: 2.5,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#070b14',
+          logging: false
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `ALL-TIME-XI-${state.builderCountryCode || 'TEAM'}-${state.builderFormationCode || 'XI'}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast('화면 그대로 고화질 PNG 이미지가 저장되었습니다!', 'success');
+        return;
+      } catch (err) {
+        console.warn('html2canvas screenshot fallback:', err);
+      }
+    }
+
     const payload = buildLineupPayload();
     if (!payload) return;
     showToast('고해상도 전술판 PNG 이미지를 생성하는 중입니다...', 'info');

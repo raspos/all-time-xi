@@ -146,10 +146,10 @@ def draw_player_node(
     kit_secondary: Tuple[int, int, int],
     kit_text: Tuple[int, int, int]
 ):
-    font_name = load_korean_font(max(13, int(radius * 0.44)), bold=True)
-    font_sub = load_korean_font(max(11, int(radius * 0.34)), bold=False)
-    font_num = load_korean_font(max(14, int(radius * 0.58)), bold=True)
-    font_pos = load_korean_font(max(10, int(radius * 0.32)), bold=True)
+    font_name = load_korean_font(max(15, int(radius * 0.52)), bold=True)
+    font_sub = load_korean_font(max(12, int(radius * 0.38)), bold=False)
+    font_num = load_korean_font(max(16, int(radius * 0.65)), bold=True)
+    font_pos = load_korean_font(max(11, int(radius * 0.40)), bold=True)
 
     # Shadow
     draw.ellipse([cx - radius - 2, cy - radius + 3, cx + radius + 2, cy + radius + 7], fill=(0, 0, 0, 140))
@@ -159,7 +159,7 @@ def draw_player_node(
     suit = player.get("suitability_status", "적합")
     ring_col = (250, 204, 21) if is_cap else ((248, 113, 113) if "낮음" in suit else kit_secondary)
 
-    draw.ellipse([cx - radius - 3, cy - radius - 3, cx + radius + 3, cy + radius + 3], fill=ring_col)
+    draw.ellipse([cx - radius - 4, cy - radius - 4, cx + radius + 4, cy + radius + 4], fill=ring_col)
     draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=kit_primary)
 
     # Try portrait image if available and allowed
@@ -182,17 +182,18 @@ def draw_player_node(
     slot_code = str(player.get("slot_code") or player.get("primary_position") or "XI")
     pbbox = draw.textbbox((0, 0), slot_code, font=font_pos)
     pw, ph = pbbox[2] - pbbox[0], pbbox[3] - pbbox[1]
-    px0, py0 = cx - radius - 8, cy - radius - 6
-    draw.rounded_rectangle([px0, py0, px0 + pw + 10, py0 + ph + 6], radius=6, fill=(15, 23, 42), outline=ring_col, width=1)
-    draw.text((px0 + 5, py0 + 2), slot_code, fill=(248, 250, 252), font=font_pos)
+    px0, py0 = cx - radius - 8, cy - radius - 8
+    draw.rounded_rectangle([px0, py0, px0 + pw + 12, py0 + ph + 8], radius=6, fill=(15, 23, 42), outline=ring_col, width=2)
+    draw.text((px0 + 6, py0 + 3), slot_code, fill=(248, 250, 252), font=font_pos)
 
     # Captain 'C' badge at top-right
     if is_cap:
         cbbox = draw.textbbox((0, 0), "C", font=font_pos)
         cw = cbbox[2] - cbbox[0]
-        cx0, cy0 = cx + radius - 10, cy - radius - 6
-        draw.ellipse([cx0, cy0, cx0 + 20, cy0 + 20], fill=(250, 204, 21), outline=(15, 23, 42), width=2)
-        draw.text((cx0 + (20 - cw) // 2, cy0 + 2), "C", fill=(15, 23, 42), font=font_pos)
+        c_r = max(24, int(radius * 0.48))
+        cx0, cy0 = cx + radius - 12, cy - radius - 8
+        draw.ellipse([cx0, cy0, cx0 + c_r, cy0 + c_r], fill=(250, 204, 21), outline=(15, 23, 42), width=2)
+        draw.text((cx0 + (c_r - cw) // 2, cy0 + 3), "C", fill=(15, 23, 42), font=font_pos)
 
     # Name plate below circle
     name_ko = str(player.get("name_ko") or player.get("name_en") or "선수")
@@ -200,22 +201,22 @@ def draw_player_node(
         name_ko = name_ko[:9] + "…"
     nbbox = draw.textbbox((0, 0), name_ko, font=font_name)
     nw, nh = nbbox[2] - nbbox[0], nbbox[3] - nbbox[1]
-    plate_w = max(nw + 16, int(radius * 2.2))
-    plate_h = nh + 22
-    ny0 = cy + radius + 5
+    plate_w = max(nw + 24, int(radius * 2.4))
+    plate_h = nh + 28
+    ny0 = cy + radius + 6
     draw.rounded_rectangle(
         [cx - plate_w // 2, ny0, cx + plate_w // 2, ny0 + plate_h],
-        radius=7,
-        fill=(15, 23, 42, 235),
+        radius=8,
+        fill=(15, 23, 42, 240),
         outline=(51, 65, 85),
-        width=1
+        width=2
     )
-    draw.text((cx - nw // 2, ny0 + 3), name_ko, fill=(255, 255, 255), font=font_name)
+    draw.text((cx - nw // 2, ny0 + 4), name_ko, fill=(255, 255, 255), font=font_name)
 
     caps_txt = f"{player.get('official_caps', 30)}경기 · {player.get('active_period_label', '')}"
     sbbox = draw.textbbox((0, 0), caps_txt, font=font_sub)
     sw = sbbox[2] - sbbox[0]
-    draw.text((cx - sw // 2, ny0 + nh + 5), caps_txt, fill=(148, 163, 184), font=font_sub)
+    draw.text((cx - sw // 2, ny0 + nh + 7), caps_txt, fill=(148, 163, 184), font=font_sub)
 
 def render_lineup_png(lineup_data: Dict[str, Any], layout: str = "portrait", scale: int = 1) -> bytes:
     """
@@ -285,7 +286,7 @@ def render_lineup_png(lineup_data: Dict[str, Any], layout: str = "portrait", sca
 
     px0, py0, px1, py1 = pitch_box
     pw, ph = px1 - px0, py1 - py0
-    node_r = (26 if layout == "landscape" else 36) * scale
+    node_r = (36 if layout == "landscape" else 48) * scale
 
     players = lineup_data.get("players", [])
     for p in players:
