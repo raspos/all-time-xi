@@ -3399,6 +3399,28 @@ const DEFAULT_FORMATIONS = [
   // ============================================================================
   // VISITOR COUNTER & KAKAO IMAGE SHARE SYSTEM
   // ============================================================================
+    // ============================================================================
+  // PURE UNIQUE VISITOR (UV) TRACKING SYSTEM
+  // ============================================================================
+  function trackDailyUniqueVisit() {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const lastRecorded = localStorage.getItem('all_time_xi_last_unique_visit');
+      if (lastRecorded === today) {
+        // Already recorded today on this device -> do not increment
+        return;
+      }
+      // Record today's unique visit once
+      localStorage.setItem('all_time_xi_last_unique_visit', today);
+      fetch('/api/stats/visit', { method: 'POST' })
+        .then(r => r.json())
+        .then(stats => {
+          if (stats) updateVisitorCounterUI(stats);
+        })
+        .catch(() => {});
+    } catch (e) {}
+  }
+
   function updateVisitorCounterUI(stats) {
     try {
       try {
@@ -4146,6 +4168,7 @@ const DEFAULT_FORMATIONS = [
           state.formations = (bData.formations && bData.formations.length) ? bData.formations : DEFAULT_FORMATIONS;
           state.savedLineups = bData.lineups || [];
           if (bData.visitor_stats) updateVisitorCounterUI(bData.visitor_stats);
+          trackDailyUniqueVisit();
           state.builderCountryCode = 'BRA';
           state.builderCountryPlayers = bData.initial_builder_players || [];
           initBuilderSlotsForFormation('4-3-3', false);
