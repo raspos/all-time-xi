@@ -1501,8 +1501,9 @@ const DEFAULT_FORMATIONS = [
               <span>·</span>
               <span>성인 남자 A매치 30회 이상 공식 기록 검증</span>
             </div>
-            <h1 class="text-[clamp(1.5rem,3.2vw,3rem)] font-black tracking-tight text-white leading-[1.25]">
-              <span class="block"><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-emerald-400">역대 최강의 국가대표, 베스트 일레븐</span>을 완성하라</span>
+            <h1 class="text-[clamp(1.75rem,3.4vw,3.2rem)] font-black tracking-tight text-white leading-[1.25]">
+              <span class="block">역대 최강의 국가대표,</span>
+              <span class="block mt-1"><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-emerald-400">베스트 일레븐</span>을 완성하라</span>
             </h1>
             <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl">
               1950·60년대 펠레·가린샤·보비 찰턴부터 1970·80년대 마라도나·베켄바워·크라위프·지쿠, 1990·2000년대 호나우두·지단·말디니, 2010·2020년대 메시·호날두·네이마르·음바페까지.<br/>
