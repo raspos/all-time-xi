@@ -1130,6 +1130,10 @@ const DEFAULT_FORMATIONS = [
     formations: DEFAULT_FORMATIONS,
     savedLineups: [],
 
+    // Board state
+    boardCountryFilter: 'ALL',
+    boardSearch: '',
+
     // Home filters
     homeSearch: '',
     homeConfed: 'ALL',
@@ -1221,7 +1225,7 @@ const DEFAULT_FORMATIONS = [
   }
 
   function updateNavHighlight() {
-    ['home', 'builder', 'database', 'quality'].forEach(v => {
+    ['home', 'builder', 'board', 'database', 'quality'].forEach(v => {
       const btn = document.getElementById(`nav-${v}`);
       if (!btn) return;
       if (state.view === v) {
@@ -1919,9 +1923,10 @@ const DEFAULT_FORMATIONS = [
                         class="w-1/2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700">
                   📁 임시 보관 (브라우저)
                 </button>
-                <button onclick="document.getElementById('saved-lineups-board')?.scrollIntoView({behavior:'smooth'})"
-                        class="w-1/2 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-amber-300 text-xs font-bold border border-slate-800">
-                  📋 게시판 목록 보기
+                <button onclick="window.app.navigate('board')"
+                        class="w-1/2 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-amber-300 text-xs font-bold border border-slate-800 flex items-center justify-center gap-1">
+                  <span>📋</span>
+                  <span>베스트11 갤러리</span>
                 </button>
               </div>
             </div>
@@ -2135,162 +2140,285 @@ const DEFAULT_FORMATIONS = [
           </div>
       </div>
 
-      <!-- Section: 저장된 베스트 11 게시판 (내 저장 팀 & 추천 드림팀 갤러리) -->
-      <div id="saved-lineups-board" class="mt-10 rounded-3xl bg-slate-900/95 border border-slate-800 p-5 sm:p-7 space-y-6 shadow-2xl">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <!-- Section: 베스트11 갤러리 이동 안내 배너 -->
+      <div class="mt-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 p-5 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-2xl">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-2xl shrink-0">
+            📋
+          </div>
           <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-              <span>📋 베스트 11 게시판 (SAVED BEST 11 BOARD)</span>
-              <span>·</span>
-              <span>총 ${state.savedLineups.length}개 팀 등록됨</span>
+            <div class="flex items-center gap-2">
+              <h4 class="font-black text-white text-base sm:text-lg">저장된 역대 베스트 11 갤러리</h4>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold font-mono">총 ${state.savedLineups.length}개 팀</span>
             </div>
-            <h3 class="text-xl sm:text-2xl font-black text-white mt-1.5">저장된 역대 베스트 11 갤러리</h3>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-              사용자가 저장한 베스트11 및 국가별 공식 올타임 드림팀 목록입니다. 언제든지 클릭하여 전술판으로 다시 불러오거나, 고해상도 PNG를 다운로드하고 카카오톡으로 바로 공유할 수 있습니다.
+            <p class="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
+              사용자가 저장한 국가별 올타임 드림팀을 전용 갤러리 탭에서 넓고 쾌적하게 확인하세요.<br class="hidden sm:inline" />
+              언제든지 클릭 한 번으로 전술판으로 다시 불러오거나 카카오톡으로 공유할 수 있습니다.
             </p>
           </div>
-          <button onclick="window.app.saveCurrentLineup(false)"
-                  class="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-400/20 transition whitespace-nowrap self-start sm:self-auto">
-            💾 지금 전술판 팀 게시판에 저장
-          </button>
         </div>
-
-        <!-- 2-column wide spacious grid: Never squished or crowded -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          ${state.savedLineups.map((l) => {
-            const snap = l.snapshot || {};
-            const flag = snap.flag_emoji || (state.countries.find(c => c.fifa_code === l.country_fifa_code) || {}).flag_emoji || '⚽';
-            const players = snap.players || [];
-            const shareUrl = `${window.location.origin}/team/${l.share_slug}`;
-            const teamTitle = l.team_name || snap.team_name || '올타임 베스트 11';
-            const desc = l.team_description || snap.team_description || '';
-            const cName = l.country_name_ko || snap.country_name_ko || l.country_fifa_code;
-            const fCode = l.formation_code || snap.formation_code || '4-3-3';
-            const style = l.tactical_style || snap.tactical_style || '균형형';
-
-            return `
-              <div class="rounded-2xl bg-slate-950 border border-slate-800/90 hover:border-amber-400/80 p-5 sm:p-6 flex flex-col justify-between gap-4 transition-all duration-200 shadow-xl group hover:-translate-y-0.5">
-                <div class="space-y-4">
-                  <!-- Header: Country Flag, Title, Formation Badge & Style -->
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="flex items-center gap-3.5 min-w-0">
-                      <span class="text-3xl shrink-0 p-2 rounded-2xl bg-slate-900 border border-slate-800 shadow">${escapeHtml(flag)}</span>
-                      <div class="min-w-0">
-                        <h4 class="font-black text-white text-base sm:text-lg leading-tight truncate group-hover:text-amber-300 transition" title="${escapeHtml(teamTitle)}">
-                          ${escapeHtml(teamTitle)}
-                        </h4>
-                        <div class="text-xs text-slate-400 font-medium mt-1 flex items-center gap-2 flex-wrap">
-                          <span class="text-slate-200 font-bold">${escapeHtml(cName)}</span>
-                          <span class="text-slate-600">·</span>
-                          <span class="px-2 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/30 text-xs font-black text-amber-300">포메이션 ${escapeHtml(fCode)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-300 shrink-0">
-                      ${escapeHtml(style)}
-                    </span>
-                  </div>
-
-                  <!-- Team description if present -->
-                  ${desc ? `
-                    <div class="text-xs text-slate-300 leading-relaxed bg-slate-900/70 p-3 rounded-xl border border-slate-800/80">
-                      ${escapeHtml(desc)}
-                    </div>
-                  ` : ''}
-
-                  <!-- 11 Players Position-Line Squad Layout: Universal & 100% Squish-Proof on all PCs & Mobiles -->
-                  <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3 shadow-inner">
-                    <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
-                      <div class="flex items-center gap-2">
-                        <span class="text-base">👥</span>
-                        <span class="text-xs font-black text-slate-200">선발 11명 라인업 (포지션 라인별 명단)</span>
-                      </div>
-                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 font-bold font-mono">${players.length}명 완비</span>
-                    </div>
-
-                    ${(() => {
-                      const lines = { FW: [], MF: [], DF: [], GK: [] };
-                      players.forEach(p => {
-                        const pos = (p.slot_code || p.primary_position || 'XI').toUpperCase();
-                        if (pos.startsWith('GK')) {
-                          lines.GK.push(p);
-                        } else if (pos.includes('B') || pos.includes('DF') || pos.includes('CB') || pos.includes('LB') || pos.includes('RB')) {
-                          lines.DF.push(p);
-                        } else if (pos.includes('M') || pos.includes('CM') || pos.includes('CAM') || pos.includes('CDM') || pos.includes('LM') || pos.includes('RM')) {
-                          lines.MF.push(p);
-                        } else {
-                          lines.FW.push(p);
-                        }
-                      });
-
-                      const renderLine = (label, linePlayers, badgeColor, textColor) => {
-                        if (!linePlayers.length) return '';
-                        return `
-                          <div class="flex items-start gap-2.5 text-xs">
-                            <span class="w-14 px-2 py-1 rounded-lg ${badgeColor} text-[11px] font-black text-center shrink-0 tracking-wider">${label}</span>
-                            <div class="flex items-center gap-x-2 gap-y-1.5 flex-wrap text-slate-200 pt-0.5 font-medium">
-                              ${linePlayers.map(p => `
-                                <span class="inline-flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 hover:border-slate-700 shadow-sm transition">
-                                  <strong class="text-slate-100 font-bold text-xs">${escapeHtml(formatPlayerSquadDisplayName(p.name_ko || p.name_en))}</strong>
-                                  <span class="text-[10px] ${textColor} font-mono font-bold">(${escapeHtml(p.slot_code || p.primary_position || '')})</span>
-                                  ${p.is_captain ? `<span class="text-[9px] px-1 rounded bg-amber-400 text-slate-950 font-black">C</span>` : ''}
-                                </span>
-                              `).join('')}
-                            </div>
-                          </div>
-                        `;
-                      };
-
-                      return [
-                        renderLine('FW 공격', lines.FW, 'bg-rose-500/20 text-rose-300 border border-rose-500/40', 'text-rose-400'),
-                        renderLine('MF 미드', lines.MF, 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40', 'text-emerald-400'),
-                        renderLine('DF 수비', lines.DF, 'bg-sky-500/20 text-sky-300 border border-sky-500/40', 'text-sky-400'),
-                        renderLine('GK 골키', lines.GK, 'bg-amber-500/20 text-amber-300 border border-amber-500/40', 'text-amber-400')
-                      ].join('');
-                    })()}
-                  </div>
-                </div>
-
-                <!-- Clean action buttons row: fully spaced, never squished -->
-                <div class="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-                  <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <button onclick="window.app.loadSavedLineupIntoBuilder('${escapeHtml(l.share_slug)}')"
-                            class="flex-1 py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow whitespace-nowrap">
-                      <span>📂</span>
-                      <span>전술판 불러오기</span>
-                    </button>
-                    <button onclick="window.app.openSavedLineupImagePreview('${escapeHtml(teamTitle)}', '${escapeHtml(l.share_slug)}')"
-                            class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow whitespace-nowrap"
-                            title="전술판 고해상도 완성 이미지 미리보기 & 새 탭에서 열기">
-                      <span>🖼️</span>
-                      <span>이미지 미리보기</span>
-                    </button>
-                  </div>
-                  <div class="flex items-center gap-1.5 shrink-0">
-                    <button onclick="window.app.shareSavedLineupDirectly('${escapeHtml(teamTitle)}', '${escapeHtml(l.share_slug)}')"
-                            class="py-2 px-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 shadow"
-                            title="카카오톡으로 공유">
-                      <span>💬</span>
-                      <span>카톡</span>
-                    </button>
-                    <button onclick="window.app.copyShareUrl('${escapeHtml(shareUrl)}')"
-                            class="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1"
-                            title="공유 링크 복사">
-                      <span>🔗</span>
-                      <span>링크</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
+        <button onclick="window.app.navigate('board')"
+                class="px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-400/25 transition whitespace-nowrap self-start sm:self-auto flex items-center gap-2">
+          <span>📋</span>
+          <span>베스트11 갤러리 보러가기 →</span>
+        </button>
       </div>
     `;
   }
 
   // ============================================================================
-  // VIEW 3: AI VIRTUAL MATCHUP ARENA (Section 7)
+
+  // ============================================================================
+  // VIEW 2.5: SAVED BEST 11 GALLERY VIEW (Dedicated Tab)
+  // ============================================================================
+  function renderBoardView() {
+    const filterCountry = state.boardCountryFilter || 'ALL';
+    const search = (state.boardSearch || '').trim().toLowerCase();
+
+    // Collect country stats for filter pills
+    const countryMap = {};
+    (state.savedLineups || []).forEach(l => {
+      const snap = l.snapshot || {};
+      const code = l.country_fifa_code || snap.country_fifa_code;
+      const name = l.country_name_ko || snap.country_name_ko || code;
+      const flag = snap.flag_emoji || (state.countries.find(c => c.fifa_code === code) || {}).flag_emoji || '⚽';
+      if (code) {
+        if (!countryMap[code]) countryMap[code] = { code, name, flag, count: 0 };
+        countryMap[code].count++;
+      }
+    });
+
+    const filteredLineups = (state.savedLineups || []).filter(l => {
+      const snap = l.snapshot || {};
+      const cCode = l.country_fifa_code || snap.country_fifa_code || '';
+      if (filterCountry !== 'ALL' && cCode !== filterCountry) return false;
+      if (search) {
+        const teamName = (l.team_name || snap.team_name || '').toLowerCase();
+        const countryName = (l.country_name_ko || snap.country_name_ko || '').toLowerCase();
+        const fCode = (l.formation_code || snap.formation_code || '').toLowerCase();
+        const players = snap.players || [];
+        const playerNames = players.map(p => (p.name_ko || p.name_en || '').toLowerCase()).join(' ');
+        if (!teamName.includes(search) && !countryName.includes(search) && !fCode.includes(search) && !playerNames.includes(search)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return `
+      <div class="space-y-6">
+        <!-- Hero Header -->
+        <div class="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-amber-400/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div class="space-y-2">
+              <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold">
+                <span>📋 베스트 11 갤러리</span>
+                <span>·</span>
+                <span>총 ${filteredLineups.length}개 팀 (전체 ${state.savedLineups.length}개)</span>
+              </div>
+              <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                저장된 역대 베스트 11 갤러리
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-400 max-w-2xl leading-relaxed">
+                사용자가 직접 구성하여 저장한 베스트11 및 국가별 공식 올타임 드림팀 목록입니다.<br class="hidden sm:inline" />
+                전술판으로 즉시 불러와 수정하거나, 고해상도 PNG 완성 이미지 미리보기 및 새 탭 열기, 카카오톡 공유가 가능합니다.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3 shrink-0 flex-wrap">
+              <button onclick="window.app.navigate('builder')"
+                      class="px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-400/25 transition flex items-center gap-2">
+                <span>⚽</span>
+                <span>새 베스트11 만들기</span>
+              </button>
+              <button onclick="window.app.saveCurrentLineup(false)"
+                      class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs sm:text-sm shadow transition flex items-center gap-2">
+                <span>💾</span>
+                <span>현재 전술판 저장</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Country Filter Pills & Search Bar -->
+          <div class="mt-6 pt-5 border-t border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs">
+              <button onclick="window.app.setBoardCountryFilter('ALL')"
+                      class="px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${filterCountry === 'ALL' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'}">
+                전체 (${state.savedLineups.length})
+              </button>
+              ${Object.values(countryMap).map(c => `
+                <button onclick="window.app.setBoardCountryFilter('${c.code}')"
+                        class="px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap flex items-center gap-1.5 ${filterCountry === c.code ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'}">
+                  <span>${escapeHtml(c.flag)}</span>
+                  <span>${escapeHtml(c.name)}</span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded-full ${filterCountry === c.code ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 text-slate-400'} font-mono">${c.count}</span>
+                </button>
+              `).join('')}
+            </div>
+
+            <!-- Search -->
+            <div class="relative w-full md:w-72 shrink-0">
+              <input type="text"
+                     placeholder="팀명, 국가, 선수명 검색..."
+                     value="${escapeHtml(state.boardSearch || '')}"
+                     oninput="window.app.setBoardSearch(this.value)"
+                     class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 pl-9 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+              <span class="absolute left-3 top-2.5 text-slate-500 text-xs">🔍</span>
+              ${state.boardSearch ? `
+                <button onclick="window.app.setBoardSearch('');" class="absolute right-2.5 top-2 text-slate-400 hover:text-white text-xs">✕</button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- Cards Grid -->
+        ${filteredLineups.length === 0 ? `
+          <div class="rounded-3xl bg-slate-900/60 border border-slate-800 p-12 text-center space-y-4 shadow-xl">
+            <div class="text-4xl">⚽</div>
+            <h4 class="text-lg font-bold text-white">조건에 맞는 베스트 11이 없습니다</h4>
+            <p class="text-xs text-slate-400">다른 국가를 선택하거나 검색어를 변경해 보세요.</p>
+            <button onclick="window.app.setBoardCountryFilter('ALL'); window.app.setBoardSearch('');"
+                    class="px-4 py-2 rounded-xl bg-amber-400 text-slate-950 font-bold text-xs shadow">
+              전체 목록 보기
+            </button>
+          </div>
+        ` : `
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            ${filteredLineups.map((l) => {
+              const snap = l.snapshot || {};
+              const flag = snap.flag_emoji || (state.countries.find(c => c.fifa_code === l.country_fifa_code) || {}).flag_emoji || '⚽';
+              const players = snap.players || [];
+              const shareUrl = `${window.location.origin}/team/${l.share_slug}`;
+              const teamTitle = l.team_name || snap.team_name || '올타임 베스트 11';
+              const desc = l.team_description || snap.team_description || '';
+              const cName = l.country_name_ko || snap.country_name_ko || l.country_fifa_code;
+              const fCode = l.formation_code || snap.formation_code || '4-3-3';
+              const style = l.tactical_style || snap.tactical_style || '균형형';
+
+              return `
+                <div class="rounded-2xl bg-slate-950 border border-slate-800/90 hover:border-amber-400/80 p-5 sm:p-6 flex flex-col justify-between gap-4 transition-all duration-200 shadow-xl group hover:-translate-y-0.5">
+                  <div class="space-y-4">
+                    <!-- Header: Country Flag, Title, Formation Badge & Style -->
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="flex items-center gap-3.5 min-w-0">
+                        <span class="text-3xl shrink-0 p-2 rounded-2xl bg-slate-900 border border-slate-800 shadow">${escapeHtml(flag)}</span>
+                        <div class="min-w-0">
+                          <h4 class="font-black text-white text-base sm:text-lg leading-tight truncate group-hover:text-amber-300 transition" title="${escapeHtml(teamTitle)}">
+                            ${escapeHtml(teamTitle)}
+                          </h4>
+                          <div class="text-xs text-slate-400 font-medium mt-1 flex items-center gap-2 flex-wrap">
+                            <span class="text-slate-200 font-bold">${escapeHtml(cName)}</span>
+                            <span class="text-slate-600">·</span>
+                            <span class="px-2 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/30 text-xs font-black text-amber-300">포메이션 ${escapeHtml(fCode)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-300 shrink-0">
+                        ${escapeHtml(style)}
+                      </span>
+                    </div>
+
+                    <!-- Team description if present -->
+                    ${desc ? `
+                      <div class="text-xs text-slate-300 leading-relaxed bg-slate-900/70 p-3 rounded-xl border border-slate-800/80">
+                        ${escapeHtml(desc)}
+                      </div>
+                    ` : ''}
+
+                    <!-- 11 Players Position-Line Squad Layout: Universal & 100% Squish-Proof on all PCs & Mobiles -->
+                    <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3 shadow-inner">
+                      <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                        <div class="flex items-center gap-2">
+                          <span class="text-base">👥</span>
+                          <span class="text-xs font-black text-slate-200">선발 11명 라인업 (포지션 라인별 명단)</span>
+                        </div>
+                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 font-bold font-mono">${players.length}명 완비</span>
+                      </div>
+
+                      ${(() => {
+                        const lines = { FW: [], MF: [], DF: [], GK: [] };
+                        players.forEach(p => {
+                          const pos = (p.slot_code || p.primary_position || 'XI').toUpperCase();
+                          if (pos.startsWith('GK')) {
+                            lines.GK.push(p);
+                          } else if (pos.includes('B') || pos.includes('DF') || pos.includes('CB') || pos.includes('LB') || pos.includes('RB')) {
+                            lines.DF.push(p);
+                          } else if (pos.includes('M') || pos.includes('CM') || pos.includes('CAM') || pos.includes('CDM') || pos.includes('LM') || pos.includes('RM')) {
+                            lines.MF.push(p);
+                          } else {
+                            lines.FW.push(p);
+                          }
+                        });
+
+                        const renderLine = (label, linePlayers, badgeColor, textColor) => {
+                          if (!linePlayers.length) return '';
+                          return `
+                            <div class="flex items-start gap-2.5 text-xs">
+                              <span class="w-14 px-2 py-1 rounded-lg ${badgeColor} text-[11px] font-black text-center shrink-0 tracking-wider">${label}</span>
+                              <div class="flex items-center gap-x-2 gap-y-1.5 flex-wrap text-slate-200 pt-0.5 font-medium">
+                                ${linePlayers.map(p => `
+                                  <span class="inline-flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 hover:border-slate-700 shadow-sm transition">
+                                    <strong class="text-slate-100 font-bold text-xs">${escapeHtml(formatPlayerSquadDisplayName(p.name_ko || p.name_en))}</strong>
+                                    <span class="text-[10px] ${textColor} font-mono font-bold">(${escapeHtml(p.slot_code || p.primary_position || '')})</span>
+                                    ${p.is_captain ? `<span class="text-[9px] px-1 rounded bg-amber-400 text-slate-950 font-black">C</span>` : ''}
+                                  </span>
+                                `).join('')}
+                              </div>
+                            </div>
+                          `;
+                        };
+
+                        return [
+                          renderLine('FW 공격', lines.FW, 'bg-rose-500/20 text-rose-300 border border-rose-500/40', 'text-rose-400'),
+                          renderLine('MF 미드', lines.MF, 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40', 'text-emerald-400'),
+                          renderLine('DF 수비', lines.DF, 'bg-sky-500/20 text-sky-300 border border-sky-500/40', 'text-sky-400'),
+                          renderLine('GK 골키', lines.GK, 'bg-amber-500/20 text-amber-300 border border-amber-500/40', 'text-amber-400')
+                        ].join('');
+                      })()}
+                    </div>
+                  </div>
+
+                  <!-- Clean action buttons row: fully spaced, never squished -->
+                  <div class="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                      <button onclick="window.app.loadSavedLineupIntoBuilder('${escapeHtml(l.share_slug)}')"
+                              class="flex-1 py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow whitespace-nowrap">
+                        <span>📂</span>
+                        <span>전술판 불러오기</span>
+                      </button>
+                      <button onclick="window.app.openSavedLineupImagePreview('${escapeHtml(teamTitle)}', '${escapeHtml(l.share_slug)}')"
+                              class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow whitespace-nowrap"
+                              title="전술판 고해상도 완성 이미지 미리보기 & 새 탭에서 열기">
+                        <span>🖼️</span>
+                        <span>이미지 미리보기</span>
+                      </button>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <button onclick="window.app.shareSavedLineupDirectly('${escapeHtml(teamTitle)}', '${escapeHtml(l.share_slug)}')"
+                              class="py-2 px-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 shadow"
+                              title="카카오톡으로 공유">
+                        <span>💬</span>
+                        <span>카톡</span>
+                      </button>
+                      <button onclick="window.app.copyShareUrl('${escapeHtml(shareUrl)}')"
+                              class="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1"
+                              title="공유 링크 복사">
+                        <span>🔗</span>
+                        <span>링크</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+    // VIEW 3: AI VIRTUAL MATCHUP ARENA (Section 7)
   // ============================================================================
   function renderArenaView() {
     return `
@@ -3086,6 +3214,7 @@ const DEFAULT_FORMATIONS = [
     if (!root) return;
     if (state.view === 'home') root.innerHTML = renderHomeView();
     else if (state.view === 'builder') root.innerHTML = renderBuilderView();
+    else if (state.view === 'board') root.innerHTML = renderBoardView();
     else if (state.view === 'arena') root.innerHTML = renderArenaView();
     else if (state.view === 'database') root.innerHTML = renderDatabaseView();
     else if (state.view === 'quality') root.innerHTML = renderQualityView();

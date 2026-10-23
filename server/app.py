@@ -1787,6 +1787,9 @@ EMBEDDED_INDEX_HTML = """<!DOCTYPE html>
         <button id="nav-builder" onclick="window.app.navigate('builder')" class="nav-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap transition-colors">
           ⚽ 베스트11 전술판
         </button>
+        <button id="nav-board" onclick="window.app.navigate('board')" class="nav-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap transition-colors">
+          📋 베스트11 갤러리
+        </button>
         <button id="nav-database" onclick="window.app.navigate('database')" class="nav-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap transition-colors">
           📚 역대 선수 DB
         </button>
