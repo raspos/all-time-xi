@@ -121,6 +121,10 @@ def get_db() -> sqlite3.Connection:
 def serve_app_js_root():
     return serve_static_file("app.js")
 
+@app.get("/html2canvas.min.js")
+def serve_html2canvas_root():
+    return serve_static_file("html2canvas.min.js")
+
 @app.get("/favicon.ico")
 def serve_favicon_root():
     return serve_static_file("favicon.ico")
