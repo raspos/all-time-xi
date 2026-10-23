@@ -1,24 +1,6 @@
 {
-  "regions": [
-    "icn1"
-  ],
+  "regions": ["icn1"],
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/team/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/match/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/static/(.*)",
-      "destination": "/api/index.py"
-    },
     {
       "source": "/(.*)",
       "destination": "/api/index.py"
