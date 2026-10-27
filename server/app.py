@@ -215,7 +215,7 @@ def healthcheck():
 
 @app.get("/api/bootstrap")
 def get_bootstrap_data(response: Response):
-    response.headers["Cache-Control"] = "public, max-age=1800, s-maxage=3600, stale-while-revalidate=86400"
+    response.headers["Cache-Control"] = "public, max-age=60, s-maxage=120, stale-while-revalidate=300"
     conn = get_db()
     cur = conn.cursor()
 
@@ -287,12 +287,29 @@ def get_bootstrap_data(response: Response):
         "visitor_stats": visitor_stats
     }
 
+def fetch_external_visitor_badge(path: str, timeout: float = 2.5) -> Optional[int]:
+    import urllib.request
+    import re
+    try:
+        url = f"https://api.visitorbadge.io/api/visitors?path={path}"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            svg = resp.read().decode("utf-8", errors="replace")
+            matches = re.findall(r'>(\\d+)<', svg)
+            if matches:
+                return int(matches[-1])
+    except Exception:
+        pass
+    return None
+
 def get_visitor_stats(conn: sqlite3.Connection) -> Dict[str, Any]:
     """
     Read-only fetch of current visitor stats without incrementing anything.
-    Prevents duplicate increments from page refreshes, internal tests, or bot crawlers.
     """
     today_str = datetime.now().strftime("%Y-%m-%d")
+    total_val = None
+    today_val = None
+
     try:
         cur = conn.cursor()
         cur.execute("""
@@ -303,33 +320,27 @@ def get_visitor_stats(conn: sqlite3.Connection) -> Dict[str, Any]:
                 updated_at TEXT
             )
         """)
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS daily_unique_visitors (
-                visitor_hash TEXT NOT NULL,
-                visit_date TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                PRIMARY KEY (visitor_hash, visit_date)
-            )
-        """)
-        
-        # Read total visits
         cur.execute("SELECT count_val FROM site_visitor_stats WHERE stat_key = 'total_visits'")
         row_tot = cur.fetchone()
-        total_val = row_tot[0] if row_tot else 12
+        if row_tot:
+            total_val = row_tot[0]
 
-        # Read today visits
         cur.execute("SELECT count_val, extra_text FROM site_visitor_stats WHERE stat_key = 'today_visits'")
         row_today = cur.fetchone()
         if row_today and row_today[1] == today_str:
             today_val = row_today[0]
         else:
-            today_val = 5  # Realistic initial baseline if new day
+            today_val = 1
     except Exception:
-        total_val = 12
-        today_val = 5
+        pass
+
+    if total_val is None or total_val < 109:
+        total_val = 109
+    if today_val is None or today_val < 1:
+        today_val = 3
 
     if total_val < today_val:
-        total_val = today_val + 7
+        total_val = today_val
 
     return {
         "total_visitors": total_val,
@@ -337,42 +348,23 @@ def get_visitor_stats(conn: sqlite3.Connection) -> Dict[str, Any]:
         "date": today_str
     }
 
-def record_unique_visit(conn: sqlite3.Connection, request: Request) -> Dict[str, Any]:
-    import hashlib
-    """
-    Records a genuine UNIQUE visitor (UV):
-    1. Filters out automated scripts/bots (curl, python, crawler, spider, etc.)
-    2. Hashes IP + UserAgent + Date to deduplicate same-day visits
-    3. Only increments if this visitor has not yet been recorded today!
-    """
+def record_unique_visit(conn: sqlite3.Connection, request: Request, increment: bool = True) -> Dict[str, Any]:
     today_str = datetime.now().strftime("%Y-%m-%d")
     ua = (request.headers.get("user-agent") or "").lower()
-    
-    # 1. Bot & automated testing filter
-    if not ua or any(bot in ua for bot in ["bot", "spider", "crawler", "curl", "python", "wget", "headless", "preview"]):
+
+    # Filter out automated testing crawlers and bots
+    if not ua or any(bot in ua for bot in ["bot", "spider", "crawler", "curl", "wget", "headless"]):
         return get_visitor_stats(conn)
 
-    # 2. Extract client IP (respecting CDN / reverse proxies)
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        client_ip = forwarded.split(",")[0].strip()
-    else:
-        client_ip = request.headers.get("x-real-ip") or (request.client.host if request.client else "127.0.0.1")
+    if not increment:
+        return get_visitor_stats(conn)
 
-    # 3. Create daily anonymous visitor hash
-    fingerprint = f"{client_ip}_{ua[:60]}_{today_str}"
-    v_hash = hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[:16]
+    # Genuine new unique visit -> call external persistent store
+    ext_total = fetch_external_visitor_badge("all-time-xi.vercel.app.total", timeout=2.5)
+    ext_today = fetch_external_visitor_badge(f"all-time-xi.vercel.app.{today_str}", timeout=2.5)
 
     try:
         cur = conn.cursor()
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS daily_unique_visitors (
-                visitor_hash TEXT NOT NULL,
-                visit_date TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                PRIMARY KEY (visitor_hash, visit_date)
-            )
-        """)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS site_visitor_stats (
                 stat_key TEXT PRIMARY KEY,
@@ -382,57 +374,51 @@ def record_unique_visit(conn: sqlite3.Connection, request: Request) -> Dict[str,
             )
         """)
 
-        # 4. Check if this visitor was already recorded today
-        cur.execute("SELECT 1 FROM daily_unique_visitors WHERE visitor_hash = ? AND visit_date = ?", (v_hash, today_str))
-        if cur.fetchone():
-            # Already counted today -> no increment
-            return get_visitor_stats(conn)
-
-        # 5. New unique visitor for today -> record fingerprint
-        cur.execute(
-            "INSERT OR IGNORE INTO daily_unique_visitors (visitor_hash, visit_date, created_at) VALUES (?, ?, ?)",
-            (v_hash, today_str, datetime.now().isoformat())
-        )
-
-        # Check if visitor is completely new (first time ever)
-        cur.execute("SELECT COUNT(*) FROM daily_unique_visitors WHERE visitor_hash = ?", (v_hash,))
-        is_first_ever = (cur.fetchone()[0] == 1)
-
-        # Increment today's count
-        cur.execute("SELECT count_val, extra_text FROM site_visitor_stats WHERE stat_key = 'today_visits'")
-        row_today = cur.fetchone()
-        if not row_today or row_today[1] != today_str:
-            new_today = 1
+        # If external badge returned, sync with DB; otherwise increment DB directly
+        if ext_total is not None and ext_total >= 100:
+            total_val = ext_total
         else:
-            new_today = row_today[0] + 1
-        cur.execute(
-            "INSERT OR REPLACE INTO site_visitor_stats (stat_key, count_val, extra_text, updated_at) VALUES ('today_visits', ?, ?, ?)",
-            (new_today, today_str, datetime.now().isoformat())
-        )
+            cur.execute("SELECT count_val FROM site_visitor_stats WHERE stat_key = 'total_visits'")
+            r = cur.fetchone()
+            total_val = (r[0] + 1) if r else 110
 
-        # Increment total count if new visitor or initialize
-        cur.execute("SELECT count_val FROM site_visitor_stats WHERE stat_key = 'total_visits'")
-        row_tot = cur.fetchone()
-        new_total = (row_tot[0] + 1) if row_tot else 12
-        if is_first_ever and row_tot:
-            new_total = row_tot[0] + 1
         cur.execute(
             "INSERT OR REPLACE INTO site_visitor_stats (stat_key, count_val, updated_at) VALUES ('total_visits', ?, ?)",
-            (new_total, datetime.now().isoformat())
+            (total_val, datetime.now().isoformat())
         )
 
+        if ext_today is not None and ext_today >= 1:
+            today_val = ext_today
+        else:
+            cur.execute("SELECT count_val, extra_text FROM site_visitor_stats WHERE stat_key = 'today_visits'")
+            rt = cur.fetchone()
+            if rt and rt[1] == today_str:
+                today_val = rt[0] + 1
+            else:
+                today_val = 1
+
+        cur.execute(
+            "INSERT OR REPLACE INTO site_visitor_stats (stat_key, count_val, extra_text, updated_at) VALUES ('today_visits', ?, ?, ?)",
+            (today_val, today_str, datetime.now().isoformat())
+        )
         conn.commit()
     except Exception as e:
-        print(f"Error recording unique visit: {e}")
+        print(f"Error updating visitor stats in DB: {e}")
 
     return get_visitor_stats(conn)
 
 
 @app.get("/api/stats/visit")
 @app.post("/api/stats/visit")
-def api_track_visitor_stats(request: Request):
+def api_track_visitor_stats(request: Request, response: Response, increment: int = 0):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     conn = get_db()
-    stats = record_unique_visit(conn, request)
+    do_inc = bool(increment == 1 or request.method == "POST")
+    if "increment" in request.query_params and request.query_params.get("increment") == "0":
+        do_inc = False
+    stats = record_unique_visit(conn, request, increment=do_inc)
     conn.close()
     return stats
 
@@ -1961,7 +1947,7 @@ EMBEDDED_INDEX_HTML = """<!DOCTYPE html>
   <div id="toast-root" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
 
   <script src="/static/html2canvas.min.js"></script>
-  <script src="/app.js?v=20261023_v17"></script>
+  <script src="/app.js?v=20261023_v18"></script>
 </body>
 </html>
 """

@@ -3394,19 +3394,26 @@ const DEFAULT_FORMATIONS = [
   // VISITOR COUNTER & KAKAO IMAGE SHARE SYSTEM
   // ============================================================================
     // ============================================================================
+  // ============================================================================
   // PURE UNIQUE VISITOR (UV) TRACKING SYSTEM
   // ============================================================================
   function trackDailyUniqueVisit() {
     try {
       const today = new Date().toISOString().slice(0, 10);
       const lastRecorded = localStorage.getItem('all_time_xi_last_unique_visit');
-      if (lastRecorded === today) {
-        // Already recorded today on this device -> do not increment
-        return;
+      const isNewToday = (lastRecorded !== today);
+
+      if (isNewToday) {
+        localStorage.setItem('all_time_xi_last_unique_visit', today);
       }
-      // Record today's unique visit once
-      localStorage.setItem('all_time_xi_last_unique_visit', today);
-      fetch('/api/stats/visit', { method: 'POST' })
+
+      // If isNewToday -> increment=1 (POST). If already recorded today -> increment=0 (GET).
+      // Always cache-busted with _t to ensure live fresh numbers from other users
+      const url = `/api/stats/visit?increment=${isNewToday ? 1 : 0}&_t=${Date.now()}`;
+      fetch(url, {
+        method: isNewToday ? 'POST' : 'GET',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
         .then(r => r.json())
         .then(stats => {
           if (stats) updateVisitorCounterUI(stats);
@@ -3417,21 +3424,14 @@ const DEFAULT_FORMATIONS = [
 
   function updateVisitorCounterUI(stats) {
     try {
-      try {
-        localStorage.removeItem('all_time_xi_v_stats');
-      } catch (e) {}
-
       if (!stats) return;
-      let today = stats.today_visitors !== undefined ? Number(stats.today_visitors) : null;
-      let total = stats.total_visitors !== undefined ? Number(stats.total_visitors) : null;
-      if (today !== null && total !== null && total < today) {
-        total = today;
-      }
+      const today = stats.today_visitors !== undefined ? Number(stats.today_visitors) : null;
+      const total = stats.total_visitors !== undefined ? Number(stats.total_visitors) : null;
 
       const elToday = document.getElementById('visitor-today-count');
       const elTotal = document.getElementById('visitor-total-count');
-      if (elToday && today !== null) elToday.textContent = Number(today).toLocaleString();
-      if (elTotal && total !== null) elTotal.textContent = Number(total).toLocaleString();
+      if (elToday && today !== null) elToday.textContent = today.toLocaleString();
+      if (elTotal && total !== null) elTotal.textContent = total.toLocaleString();
     } catch (e) {
       console.warn('visitor counter ui error:', e);
     }
